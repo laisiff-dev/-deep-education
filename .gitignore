@@ -1,0 +1,19 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Windows system files
+Thumbs.db
+desktop.ini
+ehthumbs.db
+$RECYCLE.BIN/
+
+# IDE & Editor settings
+.vscode/
+.idea/
+
+# Local sensitive configuration (GitHub Token / credentials)
+github_config.json
+github_token.txt
+*.secret
