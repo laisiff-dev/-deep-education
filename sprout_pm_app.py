@@ -2019,11 +2019,40 @@ INDICATORS_DB = [
     }
 ]
 
+def parse_num_clean(val):
+    if val is None: return None
+    s = str(val).strip()
+    if not s or s == 'None': return None
+    m_rate = re.search(r'達成率\s*([0-9\.]+)%', s)
+    if m_rate: return float(m_rate.group(1)) / 100.0
+    cleaned = re.sub(r'\([0-9]{3}(?:-[0-9]|年|學年度)?\)', '', s)
+    cleaned = re.sub(r'\(教育部提供\)', '', cleaned)
+    cleaned = re.sub(r'[^\d\.%]', ' ', cleaned).strip()
+    m_pct = re.search(r'([0-9\.]+)\s*%', s)
+    if m_pct:
+        v = float(m_pct.group(1))
+        return v / 100.0 if v > 1.0 else v
+    nums = [float(x) for x in re.findall(r'[0-9]+\.?[0-9]*', cleaned) if x]
+    if nums: return nums[0]
+    return None
+
+def calc_rate_pair(actual_raw, target_raw):
+    if not actual_raw or not target_raw: return None
+    s_act = str(actual_raw).strip()
+    m_rate = re.search(r'達成率\s*([0-9\.]+)%', s_act)
+    if m_rate: return round(float(m_rate.group(1)) / 100.0, 4)
+    act_num = parse_num_clean(actual_raw)
+    tgt_num = parse_num_clean(target_raw)
+    if act_num is not None and tgt_num is not None and tgt_num > 0:
+        if act_num <= 1.0 and tgt_num <= 1.0: return round(act_num / tgt_num, 4)
+        elif act_num > 1.0 and tgt_num > 1.0: return round(act_num / tgt_num, 4)
+        elif act_num <= 1.0: return round(act_num, 4)
+    return None
+
 def parse_excel_and_merge_history(wb, period_label="最新填報期"):
     global INDICATORS_DB
     unmet_map = {}
 
-    # 1. Parse 未達標 頁籤
     for sheet_name in ["共同未達標", "自訂未達標"]:
         if sheet_name in wb.sheetnames:
             s = wb[sheet_name]
@@ -2033,8 +2062,7 @@ def parse_excel_and_merge_history(wb, period_label="最新填報期"):
                     rate_val = str(r[3] or "").strip()
                     reason = str(r[4] or "").strip()
                     note = str(r[5] or "").strip()
-                    if item_name:
-                        unmet_map[item_name] = {"rate": rate_val, "reason": reason, "note": note}
+                    if item_name: unmet_map[item_name] = {"rate": rate_val, "reason": reason, "note": note}
 
     def parse_rate(text):
         if not text: return None
@@ -2044,131 +2072,195 @@ def parse_excel_and_merge_history(wb, period_label="最新填報期"):
         if m2: return round(float(m2.group(1)) / 100.0, 4)
         return None
 
-    # Helper function to update or append indicator history
-    def process_item(item_name, aspect, code_no, val_str, desc_str, is_custom=False):
+    def process_item(item_name, aspect, code_no, val_str, desc_str, is_custom=False, annual_targets=None, annual_actuals=None, annual_rates=None, dept=None):
         rate = parse_rate(val_str)
-        unmet_info = next((v for k, v in unmet_map.items() if k in item_name or item_name in k), None)
+        unmet_info = next((v for k, v in unmet_map.items() if k in item_name or item_name in k or (code_no and code_no in k)), None)
         if unmet_info and unmet_info.get("rate"):
             try: rate = round(float(unmet_info["rate"]), 4)
             except: pass
-        
+        if rate is None and annual_rates and annual_rates.get("114"):
+            rate = annual_rates["114"]
         if rate is None: rate = 0.85
 
-        # Search existing item in INDICATORS_DB by code or name
         matched = None
         for ind in INDICATORS_DB:
             if ind.get("code") == code_no and ind.get("aspect") == aspect:
-                matched = ind
-                break
+                matched = ind; break
             elif ind.get("item") == item_name:
-                matched = ind
-                break
+                matched = ind; break
 
         final_desc = desc_str
         if unmet_info and unmet_info.get("reason"):
             final_desc = f"【未達標檢討】{unmet_info['reason']} ｜ {desc_str}"
 
+        prefix = "U" if is_custom else "C"
         if matched:
-            # 歷史軌跡保留 LOGIC：不採覆蓋模式，更新前後對比
             old_rate = matched.get("calc_rate", rate)
             matched["prev_calc_rate"] = old_rate
             matched["calc_rate"] = rate
             matched["rate_delta"] = round(rate - old_rate, 4)
-            matched["current_val_text"] = val_str[:80]
+            matched["current_val_text"] = val_str[:120]
             if final_desc: matched["qualitative_desc"] = final_desc[:280]
+            if dept and dept != "填報單位": matched["dept"] = dept
+            if annual_targets: matched["annual_targets"] = annual_targets
+            if annual_actuals: matched["annual_actuals"] = annual_actuals
+            if annual_rates: matched["annual_rates"] = annual_rates
 
-            # 判定變動狀態 (轉移達成 vs 滯後未顯著增加)
             delta = matched["rate_delta"]
-            if rate >= 0.85 and old_rate < 0.85:
-                matched["trend_status"] = "PROGRESS_MET" # 轉移達成
-            elif delta >= 0.05:
-                matched["trend_status"] = "PROGRESS_MET" # 顯著進步
-            elif delta <= 0.01 and rate < 0.85:
-                matched["trend_status"] = "STAGNANT" # 滯後未顯著增加
-            else:
-                matched["trend_status"] = "STABLE"
+            if rate >= 0.85 and old_rate < 0.85: matched["trend_status"] = "PROGRESS_MET"
+            elif delta >= 0.05: matched["trend_status"] = "PROGRESS_MET"
+            elif delta <= 0.01 and rate < 0.85: matched["trend_status"] = "STAGNANT"
+            else: matched["trend_status"] = "STABLE"
 
-            # 新增至歷史清單
             history = matched.get("history", [])
-            history.append({
-                "period": period_label,
-                "calc_rate": rate,
-                "text": val_str[:80]
-            })
+            history.append({"period": period_label, "calc_rate": rate, "text": val_str[:120]})
             matched["history"] = history
         else:
-            # 如果是全新型態指標則新增
             INDICATORS_DB.append({
-                "id": f"NEW-{len(INDICATORS_DB)+1:02d}",
+                "id": f"{prefix}-{len(INDICATORS_DB)+1:02d}",
                 "category": "自訂指標" if is_custom else "共同指標",
                 "aspect": aspect,
                 "aspect_code": "A1",
                 "code": code_no,
                 "item": item_name,
-                "dept": "填報單位",
+                "dept": dept or "填報單位",
                 "source": period_label,
-                "current_val_text": val_str[:80],
+                "current_val_text": val_str[:120],
                 "calc_rate": rate,
                 "prev_calc_rate": rate,
                 "rate_delta": 0.0,
                 "trend_status": "STABLE",
                 "qualitative_desc": final_desc[:280],
-                "milestone": "新上傳期中檢核",
+                "milestone": "期中管考追蹤",
                 "deadline": "2026-10-31",
                 "ai_agent": "【AI 專案 Agent】",
                 "ai_strategy": "啟動 AI Agent 追蹤管考與資源對接。",
-                "history": [{"period": period_label, "calc_rate": rate, "text": val_str[:80]}]
+                "annual_targets": annual_targets or {},
+                "annual_actuals": annual_actuals or {},
+                "annual_rates": annual_rates or {},
+                "history": [{"period": period_label, "calc_rate": rate, "text": val_str[:120]}]
             })
 
-    # 2. Parse 共同績效指標
     if "共同績效指標" in wb.sheetnames:
         sheet = wb["共同績效指標"]
         rows = list(sheet.iter_rows(values_only=True))
         current_aspect = "教學創新精進"
-
         for r in rows[5:]:
             if not any(r): continue
             col0 = str(r[0] or "").replace('\n', '').replace(' ', '')
             col1 = str(r[1] or "").replace('\n', '').replace(' ', '')
             col2 = str(r[2] or "")
             col3 = str(r[3] or "").replace('\n', ' ')
-
             if "教學創新" in col0 or "教學創新" in col1: current_aspect = "教學創新精進"
             elif "產學合作" in col0 or "產學合作" in col1: current_aspect = "產學合作連結"
             elif "高教公共" in col0 or "高教公共" in col1: current_aspect = "提升高教公共性"
             elif "社會責任" in col0 or "社會責任" in col1: current_aspect = "善盡社會責任 (USR)"
-
             if col3 and col2:
                 val_str = str(r[13] or "") if len(r) > 13 else ""
                 desc_str = str(r[14] or "") if len(r) > 14 else ""
+                dept_str = str(r[28] or "").replace('\n', ' ') if len(r) > 28 else ""
+                t112 = r[16] or r[15] if len(r) > 16 else ""
+                t113 = r[18] or r[17] if len(r) > 18 else ""
+                t114 = r[20] or r[19] if len(r) > 20 else ""
+                t115 = r[22] or r[21] if len(r) > 22 else ""
+                t116 = r[24] or r[23] if len(r) > 24 else ""
+                a111 = r[7] or r[6] if len(r) > 7 else ""
+                a112 = r[9] or r[8] if len(r) > 9 else ""
+                a113 = r[11] or r[10] if len(r) > 11 else ""
+                a114 = r[13] or r[12] if len(r) > 13 else ""
+                ann_targets = {"112": str(t112 or "").strip(), "113": str(t113 or "").strip(), "114": str(t114 or "").strip(), "115": str(t115 or "").strip(), "116": str(t116 or "").strip()}
+                ann_actuals = {"111": str(a111 or "").strip(), "112": str(a112 or "").strip(), "113": str(a113 or "").strip(), "114": str(a114 or "").strip()}
+                ann_rates = {"112": calc_rate_pair(a112, t112), "113": calc_rate_pair(a113, t113), "114": calc_rate_pair(a114, t114)}
                 item_full = f"{col1} - {col3}" if col1 else col3
-                process_item(item_full, current_aspect, col2, val_str, desc_str, False)
+                process_item(item_full, current_aspect, col2, val_str, desc_str, False, ann_targets, ann_actuals, ann_rates, dept_str)
 
-    # 3. Parse 自訂績效指標
     if "自訂績效指標" in wb.sheetnames:
         sheet = wb["自訂績效指標"]
         rows = list(sheet.iter_rows(values_only=True))
         current_aspect = "教學創新精進"
-
         for r in rows[4:]:
             if not any(r): continue
             col0 = str(r[0] or "").replace('\n', '').replace(' ', '')
             col1 = str(r[1] or "").replace('\n', '').replace(' ', '')
             col2 = str(r[2] or "")
             col3 = str(r[3] or "").replace('\n', ' ')
-
             if "教學創新" in col0 or "教學創新" in col1: current_aspect = "教學創新精進"
             elif "產學合作" in col0 or "產學合作" in col1: current_aspect = "產學合作連結"
             elif "高教公共" in col0 or "高教公共" in col1: current_aspect = "提升高教公共性"
             elif "社會責任" in col0 or "社會責任" in col1: current_aspect = "善盡社會責任 (USR)"
-
             if col3 and col2:
                 val_str = str(r[12] or "") if len(r) > 12 else (str(r[11] or "") if len(r) > 11 else "")
                 desc_str = str(r[13] or "") if len(r) > 13 else ""
+                dept_str = str(r[23] or "").replace('\n', ' ') if len(r) > 23 else ""
+                t112 = r[15] if len(r) > 15 else ""
+                t113 = r[16] if len(r) > 16 else ""
+                t114 = r[17] if len(r) > 17 else ""
+                t115 = r[18] if len(r) > 18 else ""
+                t116 = r[19] if len(r) > 19 else ""
+                a110 = r[8] if len(r) > 8 else ""
+                a111 = r[9] if len(r) > 9 else ""
+                a112 = r[10] if len(r) > 10 else ""
+                a113 = r[11] if len(r) > 11 else ""
+                a114 = r[12] if len(r) > 12 else ""
+                ann_targets = {"112": str(t112 or "").strip(), "113": str(t113 or "").strip(), "114": str(t114 or "").strip(), "115": str(t115 or "").strip(), "116": str(t116 or "").strip()}
+                ann_actuals = {"110": str(a110 or "").strip(), "111": str(a111 or "").strip(), "112": str(a112 or "").strip(), "113": str(a113 or "").strip(), "114": str(a114 or "").strip()}
+                ann_rates = {"112": calc_rate_pair(a112, t112), "113": calc_rate_pair(a113, t113), "114": calc_rate_pair(a114, t114)}
                 item_full = f"{col1} - {col3}" if col1 else col3
-                process_item(item_full, current_aspect, col2, val_str, desc_str, True)
+                process_item(item_full, current_aspect, col2, val_str, desc_str, True, ann_targets, ann_actuals, ann_rates, dept_str)
+
+    # 4. 前後期比較邏輯修正：比對最新 (Latest) 與 次新 (Second Latest) 資料
+    for ind in INDICATORS_DB:
+        rates = ind.get('annual_rates', {})
+        valid_years = [y for y in ['111', '112', '113', '114'] if rates.get(y) is not None]
+        
+        if len(valid_years) >= 2:
+            latest_yr = valid_years[-1]
+            prev_yr = valid_years[-2]
+            latest_rate = rates[latest_yr]
+            prev_rate = rates[prev_yr]
+        elif len(valid_years) == 1:
+            latest_yr = valid_years[0]
+            prev_yr = '期初'
+            latest_rate = rates[latest_yr]
+            prev_rate = ind.get('prev_calc_rate', 0.85)
+        else:
+            latest_yr = '最新'
+            prev_yr = '次新'
+            latest_rate = ind.get('calc_rate', 0.85)
+            prev_rate = ind.get('prev_calc_rate', 0.85)
+            
+        delta = round(latest_rate - prev_rate, 4) if (latest_rate is not None and prev_rate is not None) else 0.0
+        
+        # 判定趨勢狀態
+        if latest_rate >= 0.85 and prev_rate < 0.85:
+            trend_status = "PROGRESS_MET"
+        elif delta >= 0.05:
+            trend_status = "PROGRESS_MET"
+        elif delta <= 0.01 and latest_rate < 0.85:
+            trend_status = "STAGNANT"
+        else:
+            trend_status = "STABLE"
+            
+        ind['latest_yr'] = latest_yr
+        ind['prev_yr'] = prev_yr
+        ind['calc_rate'] = latest_rate
+        ind['prev_calc_rate'] = prev_rate
+        ind['rate_delta'] = delta
+        ind['trend_status'] = trend_status
 
     return INDICATORS_DB
+
+def load_default_excel_if_exists():
+    default_file = "第二期高教深耕計畫指標-115年第2次填報(0813彙整版).xlsx"
+    if os.path.exists(default_file):
+        try:
+            wb = openpyxl.load_workbook(default_file, data_only=True)
+            parse_excel_and_merge_history(wb, period_label="115年第2次填報 (0813彙整版)")
+            print(f"[INFO] 已自動載入預設 Excel 跨年度資料庫 (共 {len(INDICATORS_DB)} 項指標)！")
+        except Exception as e:
+            print(f"[WARN] 自動載入預設 Excel 失敗: {e}")
+
+load_default_excel_if_exists()
 
 class SproutWebServer(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
@@ -2812,6 +2904,7 @@ class SproutWebServer(http.server.SimpleHTTPRequestHandler):
             const progressList = rawData.filter(i => i.trend_status === 'PROGRESS_MET');
             const stagnantList = rawData.filter(i => i.trend_status === 'STAGNANT');
             const unmetList = rawData.filter(i => i.calc_rate < currentThreshold);
+            const loadedTargetsCount = rawData.filter(i => i.annual_targets && Object.keys(i.annual_targets).length > 0).length;
 
             document.getElementById('cnt-progress').textContent = progressList.length;
             document.getElementById('cnt-stagnant').textContent = stagnantList.length;
@@ -2820,9 +2913,9 @@ class SproutWebServer(http.server.SimpleHTTPRequestHandler):
             container.innerHTML = `
                 <div class="col-md-3">
                     <div class="card-custom p-3 border-start border-4 border-primary">
-                        <div class="text-muted small">總列管指標</div>
-                        <div class="fs-4 fw-bold text-primary">${rawData.length} 項</div>
-                        <div class="small text-muted">包含共同與自訂全數指標</div>
+                        <div class="text-muted small">總列管與跨年度目標載入</div>
+                        <div class="fs-4 fw-bold text-primary">${loadedTargetsCount} / ${rawData.length} 項</div>
+                        <div class="small text-muted">已全面載入 112~116 全期目標值</div>
                     </div>
                 </div>
                 <div class="col-md-3">
@@ -2908,7 +3001,7 @@ class SproutWebServer(http.server.SimpleHTTPRequestHandler):
                                     <th style="width: 90px;">代碼/類別</th>
                                     <th>指標項目與實績說明</th>
                                     <th style="width: 100px;">主責單位</th>
-                                    <th style="width: 180px;">前後期比較 (舊 ➔ 新)</th>
+                                    <th style="width: 200px;">前後期比較 (次新 ➔ 最新)</th>
                                     <th style="width: 130px;">差異增減 (Δ%)</th>
                                     <th style="width: 170px;">趨勢狀態</th>
                                     <th class="text-center" style="width: 100px;">操作</th>
@@ -2960,6 +3053,17 @@ class SproutWebServer(http.server.SimpleHTTPRequestHandler):
 
                 let categoryBadge = ind.category === '自訂指標' ? '<span class="badge" style="background:#f3e8ff; color:#6b21a8;">自訂</span>' : '<span class="badge bg-light text-dark border">共同</span>';
 
+                let multiYearRatePills = '';
+                if (ind.annual_rates) {
+                    const r112 = ind.annual_rates['112'] != null ? (ind.annual_rates['112']*100).toFixed(1)+'%' : '-';
+                    const r113 = ind.annual_rates['113'] != null ? (ind.annual_rates['113']*100).toFixed(1)+'%' : '-';
+                    const r114 = ind.annual_rates['114'] != null ? (ind.annual_rates['114']*100).toFixed(1)+'%' : '-';
+                    multiYearRatePills = `<div class="mt-1"><span class="badge bg-primary-subtle text-primary border" style="font-size:0.7rem;">📈 歷年達成率 112:${r112} ➔ 113:${r113} ➔ 114:${r114}</span></div>`;
+                }
+
+                const latestYrLabel = ind.latest_yr ? (ind.latest_yr.endsWith('年') ? ind.latest_yr : ind.latest_yr + '年') : '最新';
+                const prevYrLabel = ind.prev_yr ? (ind.prev_yr.endsWith('年') ? ind.prev_yr : ind.prev_yr + '年') : '次新';
+
                 html += `<tr class="${trClass}" id="row-${ind.id}">
                     <td>
                         <div class="fw-bold text-dark">${ind.id}</div>
@@ -2968,11 +3072,15 @@ class SproutWebServer(http.server.SimpleHTTPRequestHandler):
                     <td>
                         <div class="fw-bold text-dark">${ind.item}</div>
                         <div class="small text-muted mt-1">${ind.qualitative_desc || '無質化說明'}</div>
+                        ${multiYearRatePills}
                     </td>
                     <td><span class="badge bg-light text-dark border">${ind.dept}</span></td>
                     <td>
-                        <div class="small text-muted">${prevPct}% ➔ <strong class="text-dark fs-6">${currPct}%</strong></div>
-                        <div class="small text-muted text-truncate" style="max-width:160px;">${ind.current_val_text || ''}</div>
+                        <div class="small text-muted">
+                            <span class="badge bg-light text-dark border me-1">${prevYrLabel}</span>${prevPct}% ➔ 
+                            <span class="badge bg-primary-subtle text-primary border ms-1 me-1">${latestYrLabel}</span><strong class="text-dark fs-6">${currPct}%</strong>
+                        </div>
+                        <div class="small text-muted text-truncate mt-1" style="max-width:180px;" title="${ind.current_val_text || ''}">${ind.current_val_text || ''}</div>
                     </td>
                     <td>${deltaBadge}</td>
                     <td>${statusBadge}</td>
@@ -2981,7 +3089,7 @@ class SproutWebServer(http.server.SimpleHTTPRequestHandler):
                             <button class="btn btn-outline-secondary" title="編輯" onclick="openEditModal('${ind.id}')">
                                 <i class="bi bi-pencil"></i>
                             </button>
-                            <button class="btn btn-outline-primary" title="歷程對策" onclick="openAiModal('${ind.id}')">
+                            <button class="btn btn-outline-primary" title="跨年度目標與歷程對策" onclick="openAiModal('${ind.id}')">
                                 <i class="bi bi-clock-history"></i>
                             </button>
                         </div>
@@ -3098,6 +3206,61 @@ class SproutWebServer(http.server.SimpleHTTPRequestHandler):
                 </li>`
             ).join('');
 
+            const multiYearTableHtml = `
+                <h6 class="fw-bold text-dark mb-2 mt-4"><i class="bi bi-calendar3-range text-primary"></i> 📅 高教深耕第二期 (112~116年度) 跨年度目標與歷年實績對比表</h6>
+                <div class="table-responsive mb-4">
+                    <table class="table table-sm table-bordered text-center align-middle small mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 130px;">項目/年度</th>
+                                <th>112年度</th>
+                                <th>113年度</th>
+                                <th>114年度</th>
+                                <th>115年度</th>
+                                <th>116年度</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <th class="table-light text-start">🎯 年度目標值</th>
+                                <td>${(ind.annual_targets && ind.annual_targets['112']) || '-'}</td>
+                                <td>${(ind.annual_targets && ind.annual_targets['113']) || '-'}</td>
+                                <td>${(ind.annual_targets && ind.annual_targets['114']) || '-'}</td>
+                                <td>${(ind.annual_targets && ind.annual_targets['115']) || '-'}</td>
+                                <td>${(ind.annual_targets && ind.annual_targets['116']) || '-'}</td>
+                            </tr>
+                            <tr>
+                                <th class="table-light text-start">📊 現況/實績數值</th>
+                                <td>${(ind.annual_actuals && (ind.annual_actuals['112'] || ind.annual_actuals['111'])) || '-'}</td>
+                                <td>${(ind.annual_actuals && ind.annual_actuals['113']) || '-'}</td>
+                                <td>${(ind.annual_actuals && ind.annual_actuals['114']) || '-'}</td>
+                                <td class="text-muted">（進行中）</td>
+                                <td class="text-muted">（規劃中）</td>
+                            </tr>
+                            <tr>
+                                <th class="table-light text-start">📈 實際達成率 (%)</th>
+                                <td>${ind.annual_rates && ind.annual_rates['112'] != null ? `<span class="badge ${ind.annual_rates['112']>=1.0?'bg-success':'bg-warning text-dark'}">${(ind.annual_rates['112']*100).toFixed(1)}%</span>` : '-'}</td>
+                                <td>${ind.annual_rates && ind.annual_rates['113'] != null ? `<span class="badge ${ind.annual_rates['113']>=1.0?'bg-success':'bg-warning text-dark'}">${(ind.annual_rates['113']*100).toFixed(1)}%</span>` : '-'}</td>
+                                <td>${ind.annual_rates && ind.annual_rates['114'] != null ? `<span class="badge ${ind.annual_rates['114']>=1.0?'bg-success':'bg-warning text-dark'}">${(ind.annual_rates['114']*100).toFixed(1)}%</span>` : '-'}</td>
+                                <td class="text-muted">-</td>
+                                <td class="text-muted">-</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>`;
+
+            const latestYrTitle = ind.latest_yr ? (ind.latest_yr.endsWith('年') ? ind.latest_yr : ind.latest_yr + '年') : '最新期';
+            const prevYrTitle = ind.prev_yr ? (ind.prev_yr.endsWith('年') ? ind.prev_yr : ind.prev_yr + '年') : '次新期';
+
+            const modalAlertHtml = `<div class="alert alert-light border mb-3">
+                <div class="row g-2 text-dark small">
+                    <div class="col-md-3"><strong>主責處室：</strong>${ind.dept}</div>
+                    <div class="col-md-3"><strong>次新期 (${prevYrTitle})：</strong>${(ind.prev_calc_rate*100).toFixed(1)}%</div>
+                    <div class="col-md-3"><strong>最新期 (${latestYrTitle})：</strong>${(ind.calc_rate*100).toFixed(1)}%</div>
+                    <div class="col-md-3"><strong>前後差異 (次新➔最新)：</strong><span class="badge ${(ind.rate_delta>=0?'bg-success':'bg-danger')}">${deltaPct}%</span></div>
+                </div>
+            </div>`;
+
             const content = document.getElementById('aiModalContent');
             content.innerHTML = `
                 <div class="d-flex align-items-center gap-3 mb-3">
@@ -3105,14 +3268,8 @@ class SproutWebServer(http.server.SimpleHTTPRequestHandler):
                     <h5 class="fw-bold m-0">${ind.item}</h5>
                     <span class="badge bg-light text-dark border">${ind.aspect}</span>
                 </div>
-                <div class="alert alert-light border mb-4">
-                    <div class="row g-2 text-dark small">
-                        <div class="col-md-3"><strong>主責處室：</strong>${ind.dept}</div>
-                        <div class="col-md-3"><strong>前期達成率：</strong>${(ind.prev_calc_rate*100).toFixed(1)}%</div>
-                        <div class="col-md-3"><strong>最新達成率：</strong>${(ind.calc_rate*100).toFixed(1)}%</div>
-                        <div class="col-md-3"><strong>差異增減：</strong><span class="badge ${(ind.rate_delta>=0?'bg-success':'bg-danger')}">${deltaPct}%</span></div>
-                    </div>
-                </div>
+                ${modalAlertHtml}
+                ${multiYearTableHtml}
                 <h6 class="fw-bold text-dark mb-2"><i class="bi bi-clock-history"></i> 多期歷史填報軌跡 (非覆蓋紀錄)</h6>
                 <ul class="list-group mb-4 small">
                     ${historyHtml}
@@ -3244,7 +3401,7 @@ class SproutWebServer(http.server.SimpleHTTPRequestHandler):
                     refreshGithubModalStatus();
                 } else {
                     box.className = 'alert alert-danger small mb-0';
-                    box.innerHTML = '<strong>上傳提示/失敗：</strong><br>' + (res.message || '未知錯誤').replace(/\n/g, '<br>');
+                    box.innerHTML = '<strong>上傳提示/失敗：</strong><br>' + (res.message || '未知錯誤').split('\\n').join('<br>');
                 }
             })
             .catch(err => {

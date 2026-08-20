@@ -17,3 +17,7 @@ $RECYCLE.BIN/
 github_config.json
 github_token.txt
 *.secret
+
+# Excel temporary lock files
+~$*
+
