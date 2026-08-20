@@ -8,6 +8,8 @@
 
 import http.server
 import socketserver
+import socket
+import threading
 import json
 import urllib.parse
 import os
@@ -2452,7 +2454,8 @@ class SproutWebServer(http.server.SimpleHTTPRequestHandler):
         return output.getvalue().encode('utf-8-sig')
 
     def render_html_dashboard(self):
-        return """<!DOCTYPE html>
+        db_json = json.dumps(INDICATORS_DB, ensure_ascii=False)
+        html_content = """<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
@@ -2872,6 +2875,7 @@ class SproutWebServer(http.server.SimpleHTTPRequestHandler):
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
+        window.EMBEDDED_INDICATORS = /*__INDICATORS_JSON__*/[];
         let rawData = [];
         let currentThreshold = 0.70; 
         let currentDeltaFilter = 'ALL'; // ALL, PROGRESS, STAGNANT, UNMET
@@ -2892,11 +2896,20 @@ class SproutWebServer(http.server.SimpleHTTPRequestHandler):
         });
 
         function loadIndicators() {
+            if (window.EMBEDDED_INDICATORS && Array.isArray(window.EMBEDDED_INDICATORS) && window.EMBEDDED_INDICATORS.length > 0) {
+                rawData = window.EMBEDDED_INDICATORS;
+                refreshDashboard();
+            }
             fetch('/api/indicators')
                 .then(r => r.json())
                 .then(data => {
-                    rawData = data;
-                    refreshDashboard();
+                    if (data && data.length > 0) {
+                        rawData = data;
+                        refreshDashboard();
+                    }
+                })
+                .catch(err => {
+                    console.log('Using embedded static indicators:', err);
                 });
         }
 
@@ -3502,6 +3515,7 @@ class SproutWebServer(http.server.SimpleHTTPRequestHandler):
 </body>
 </html>
 """
+        return html_content.replace("/*__INDICATORS_JSON__*/[]", db_json)
 
 def get_lan_ip():
     try:

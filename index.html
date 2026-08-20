@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高教深耕計畫「智慧專案管理與指標管考系統」 (前後期歷史差異化比較版)</title>
+    <!-- Bootstrap 5 & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Google Fonts & Chart.js -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-main: #f8fafc;
+            --card-bg: #ffffff;
+            --primary-accent: #2563eb;
+            --dark-text: #0f172a;
+            --border-color: #e2e8f0;
+        }
+        body {
+            background-color: var(--bg-main);
+            font-family: 'Plus Jakarta Sans', 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--dark-text);
+            padding-bottom: 60px;
+        }
+        .navbar-custom {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* 門檻控制列專用樣式 */
+        .threshold-bar {
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 20px 24px;
+            box-shadow: 0 10px 25px rgba(49, 46, 129, 0.15);
+            margin-bottom: 24px;
+        }
+        .threshold-slider {
+            accent-color: #818cf8;
+            height: 8px;
+        }
+        
+        .card-custom {
+            background: var(--card-bg);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+            margin-bottom: 24px;
+        }
+        .table-hover tbody tr:hover {
+            background-color: #f8fafc;
+        }
+        .tr-unmet {
+            background-color: #fef2f2 !important;
+        }
+        .tr-progress {
+            background-color: #f0fdf4 !important;
+        }
+        .tr-stagnant {
+            background-color: #fffbeb !important;
+        }
+        .badge-agent {
+            background-color: #f3e8ff;
+            color: #6b21a8;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 6px;
+            border: 1px solid #d8b4fe;
+            font-size: 0.8rem;
+        }
+        .progress {
+            height: 10px;
+            border-radius: 6px;
+            background-color: #e2e8f0;
+        }
+        .progress-bar {
+            border-radius: 6px;
+        }
+        .delta-pill {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        /* 手機與行動裝置極致響應式微調 */
+        @media (max-width: 768px) {
+            .navbar-brand { font-size: 1.1rem !important; }
+            .navbar-brand div div { font-size: 0.85rem !important; }
+            .threshold-bar { padding: 15px; }
+            .card-custom { padding: 15px !important; }
+            .btn-group { flex-wrap: wrap; gap: 4px; }
+            .table-responsive { font-size: 0.85rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 頂部導覽列 -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom py-3 mb-4">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand d-flex align-items-center fw-bold fs-4" href="#">
+                <span class="fs-2 me-2">🏛️</span>
+                <div>
+                    <div>高教深耕計畫「智慧專案管理與指標管考中樞」</div>
+                    <div class="fs-6 text-info fw-normal">前後期指標差異化分析 (非覆蓋模式・追蹤轉移達成與滯後未顯著增加)</div>
+                </div>
+            </a>
+            <div class="ms-auto d-flex gap-2">
+                <button class="btn btn-info d-flex align-items-center gap-2 px-3 rounded-3 text-white fw-bold" onclick="openShareModal()" id="lan-btn" title="跨電腦與手機連線及掃碼">
+                    <i class="bi bi-qr-code-scan"></i> 📱 跨電腦/手機連線 (QR Code 掃碼)
+                </button>
+                <button class="btn btn-warning d-flex align-items-center gap-2 px-3 rounded-3 text-dark fw-bold" onclick="openUploadModal()">
+                    <i class="bi bi-cloud-arrow-up-fill"></i> 📤 上傳新期填報檔 (自動比較)
+                </button>
+                <button class="btn btn-outline-info d-flex align-items-center gap-2 px-3 rounded-3 text-white fw-bold" onclick="openGithubModal()">
+                    <i class="bi bi-github"></i> ☁️ 同步至 GitHub
+                </button>
+                <button class="btn btn-outline-light d-flex align-items-center gap-2 px-3 rounded-3" onclick="runAudit()">
+                    <i class="bi bi-shield-check text-warning"></i> 執行全表差異稽核
+                </button>
+                <a class="btn btn-success d-flex align-items-center gap-2 px-3 rounded-3" href="/api/export">
+                    <i class="bi bi-file-earmark-spreadsheet"></i> 匯出差異比較報表
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid px-4">
+        
+        <!-- 🎯 控制中樞：門檻 slider 與差異化過濾按鈕群 -->
+        <div class="threshold-bar">
+            <div class="row align-items-center g-3">
+                <div class="col-lg-4">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <i class="bi bi-sliders fs-4 text-warning"></i>
+                        <h5 class="fw-bold m-0">🎯 可調整達成率檢視門檻</h5>
+                    </div>
+                    <div class="small" style="color: #c7d2fe;">設定達成率判定門檻（預設 70%），即時比對前後期達成率消長趨勢。</div>
+                </div>
+                <div class="col-lg-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <input type="range" class="form-range threshold-slider flex-grow-1" id="threshold-range" min="0" max="100" step="5" value="70" oninput="syncThresholdInput(this.value)">
+                        <div class="input-group input-group-sm" style="width: 90px;">
+                            <input type="number" class="form-control fw-bold text-center text-primary" id="threshold-number" min="0" max="100" value="70" onchange="syncThresholdSlider(this.value)">
+                            <span class="input-group-text bg-white fw-bold">%</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-5 text-lg-end">
+                    <div class="btn-group btn-group-sm" role="group" id="delta-filter-group">
+                        <button type="button" class="btn btn-outline-light active" onclick="setDeltaFilter('ALL')">全部 62 項</button>
+                        <button type="button" class="btn btn-outline-success" onclick="setDeltaFilter('PROGRESS')">🎉 轉移達成 / 顯著進步 (<span id="cnt-progress">0</span>)</button>
+                        <button type="button" class="btn btn-outline-warning" onclick="setDeltaFilter('STAGNANT')">⚠️ 未顯著增加 / 滯後 (<span id="cnt-stagnant">0</span>)</button>
+                        <button type="button" class="btn btn-outline-danger" onclick="setDeltaFilter('UNMET')">🔴 未達標 (&lt;<span id="summary-threshold-val">70</span>%)</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 📊 四大動態統計卡片：呈現轉移達成與未顯著增加趨勢 -->
+        <div class="row g-3 mb-4" id="trend-summary-cards">
+            <!-- JavaScript 動態繪製總覽統計卡片 -->
+        </div>
+
+        <!-- 搜尋與過濾 Bar -->
+        <div class="row g-2 mb-3 bg-white p-3 rounded-4 border shadow-sm align-items-center">
+            <div class="col-md-4">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                    <input type="text" id="search-input" class="form-control form-control-sm" placeholder="搜尋指標名稱/代碼/處室..." oninput="refreshDashboard()">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select id="category-filter" class="form-select form-select-sm" onchange="refreshDashboard()">
+                    <option value="">所有指標類別 (共同指標 + 自訂指標)</option>
+                    <option value="共同指標">共同指標 (教育部指定)</option>
+                    <option value="自訂指標">自訂指標 (學校自訂)</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select id="aspect-filter" class="form-select form-select-sm" onchange="refreshDashboard()">
+                    <option value="">所有四大構面</option>
+                    <option value="教學創新精進">構面 A1：教學創新精進</option>
+                    <option value="產學合作連結">構面 A2：產學合作連結</option>
+                    <option value="提升高教公共性">構面 A3：提升高教公共性</option>
+                    <option value="善盡社會責任 (USR)">構面 A4：善盡社會責任 (USR)</option>
+                </select>
+            </div>
+            <div class="col-md-2 text-end">
+                <button class="btn btn-sm btn-outline-secondary w-100" onclick="resetFilters()">重置過濾</button>
+            </div>
+        </div>
+
+        <!-- 主介面：依四大構面呈現所有指標 (附帶前後期增減 Δ 比對) -->
+        <div id="aspects-main-container">
+            <!-- JavaScript 動態渲染四大構面內容 -->
+        </div>
+
+        <!-- 四大構面達成率圖表與智慧稽核報告 (雙欄) -->
+        <div class="row g-4 my-4">
+            <div class="col-lg-7">
+                <div class="card-custom p-4 h-100">
+                    <h5 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+                        <i class="bi bi-graph-up-arrow text-primary"></i> 📊 四大構面指標差異增減 (Δ%) 分析圖表
+                    </h5>
+                    <div style="position: relative; height: 320px;">
+                        <canvas id="aspectChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-5">
+                <div class="card-custom p-4 h-100" id="audit-card">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold text-dark m-0 d-flex align-items-center gap-2">
+                            <i class="bi bi-shield-lock-fill text-success"></i> 🛡️ 自動差異化稽核與滯後指標診斷
+                        </h5>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="runAudit()">重新掃描</button>
+                    </div>
+                    <div id="audit-content" class="overflow-auto" style="max-height: 310px;">
+                        <div class="text-center text-muted py-4">
+                            <i class="bi bi-info-circle fs-3 d-block mb-2"></i>
+                            點擊「執行全表差異稽核」掃描前後期滯後與未達標項目。
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 📱 跨手機與電腦連線 (QR Code 掃碼專區) Modal -->
+    <div class="modal fade" id="shareModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 shadow">
+                <div class="modal-header bg-gradient bg-primary text-white rounded-top-4 py-3">
+                    <h5 class="modal-title fw-bold d-flex align-items-center gap-2">
+                        <i class="bi bi-qr-code-scan fs-4"></i> 📱 跨電腦與手機連線 (QR Code 掃碼專區)
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 text-center">
+                    <p class="text-muted small mb-3">同仁使用<strong>智慧型手機 (iPhone / Android)</strong> 或<strong>其他電腦</strong>，皆可透過以下方式連線使用系統：</p>
+
+                    <!-- QR Code 展示區 -->
+                    <div class="bg-light p-3 rounded-4 border d-inline-block shadow-sm mb-3">
+                        <img id="share-qrcode-img" src="" alt="連線 QR Code" class="img-fluid rounded-3" style="width:200px; height:200px;">
+                    </div>
+                    <div class="fw-bold text-primary mb-3" id="share-lan-url-display">http://...</div>
+
+                    <div class="alert alert-info text-start small mb-3">
+                        <div class="fw-bold mb-1"><i class="bi bi-phone-fill me-1"></i> 手機連線方式：</div>
+                        1. 手機連接與本機相同的 <strong>Wi-Fi / 局域網</strong>。<br>
+                        2. 開啟手機相機或 LINE 掃瞄器，對準上方 <strong>QR Code</strong> 即可秒開啟系統。<br>
+                    </div>
+
+                    <div class="alert alert-secondary text-start small mb-0">
+                        <div class="fw-bold mb-1"><i class="bi bi-globe me-1"></i> 跨網域 / 行動網路 (4G/5G) 外網連線：</div>
+                        如需從家裡或外網連線，可於控制台執行以下命令開啟免費外網通道：<br>
+                        <code class="user-select-all bg-dark text-warning p-1 rounded d-block mt-1">npx localtunnel --port 8080</code>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0 justify-content-between">
+                    <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">關閉</button>
+                    <button type="button" class="btn btn-primary rounded-3 fw-bold" onclick="copyLanUrlFromModal()">
+                        <i class="bi bi-clipboard-check"></i> 複製連線網址
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 📤 上傳 Excel Modal -->
+    <div class="modal fade" id="uploadModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 shadow">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-header-title fw-bold">📤 上傳新期填報檔 (自動比對前後差異)</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <p class="text-muted small">上傳新期填報資料時，系統採用<strong>非覆蓋歷史比對模式</strong>，會保留舊期數據並自動計算前後期達成率增減 (Δ%)：</p>
+                    <div class="mb-3">
+                        <input type="file" id="excel-file-input" class="form-control" accept=".xlsx, .xls">
+                    </div>
+                    <div class="alert alert-warning small mb-0">
+                        <i class="bi bi-lightning-charge-fill me-1"></i> 上傳後將自動辨識「轉移達成（翻轉達標）」與「未顯著增加（滯後）」項目並標示於儀表板。
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-warning text-dark fw-bold rounded-3" onclick="uploadExcelFile()">上傳並自動比對差異</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 編輯指標 Modal -->
+    <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 shadow">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-header-title fw-bold" id="editModalLabel">✏️ 填報實績與質化說明</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editForm">
+                        <input type="hidden" id="edit-id">
+                        <div class="mb-3">
+                            <label class="form-label text-muted small fw-semibold">指標項目</label>
+                            <input type="text" id="edit-item" class="form-control" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted small fw-semibold">最新達成率 (%)</label>
+                            <input type="number" step="any" id="edit-rate" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted small fw-semibold">質化成效描述與未達標檢討說明（限300字）</label>
+                            <textarea id="edit-desc" class="form-control" rows="4" maxlength="350"></textarea>
+                            <div class="form-text text-end"><span id="desc-length">0</span> / 300 字</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted small fw-semibold">近期重要里程碑</label>
+                            <input type="text" id="edit-milestone" class="form-control">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted small fw-semibold">管考期限</label>
+                            <input type="date" id="edit-deadline" class="form-control">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary rounded-3" onclick="saveIndicator()">儲存更新</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI 策略與歷史軌跡 Modal -->
+    <div class="modal fade" id="aiModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content rounded-4 shadow">
+                <div class="modal-header bg-primary text-white rounded-top-4 py-3">
+                    <h5 class="modal-title fw-bold" id="aiModalTitle">🤖 前後期歷程比較與 AI 輔導報告</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4" id="aiModalContent">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ☁️ GitHub 自動同步與設定 Modal -->
+    <div class="modal fade" id="githubModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content rounded-4 shadow">
+                <div class="modal-header bg-dark text-white rounded-top-4 py-3">
+                    <h5 class="modal-title fw-bold d-flex align-items-center gap-2">
+                        <i class="bi bi-github fs-4 text-info"></i> ☁️ GitHub 自動同步與遠端儲存庫管理
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <!-- Git 狀態顯示卡片 -->
+                    <div class="card bg-light border mb-4">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="fw-bold m-0"><i class="bi bi-info-circle-fill text-primary me-1"></i> 本地 Git 儲存庫與連線狀態</h6>
+                                <span id="git-status-badge" class="badge bg-secondary">檢查中...</span>
+                            </div>
+                            <div class="row g-2 small text-muted">
+                                <div class="col-md-4"><strong>目前分支：</strong><span id="git-branch-text" class="text-dark fw-bold">-</span></div>
+                                <div class="col-md-8"><strong>遠端 Repo (origin)：</strong><span id="git-remote-text" class="text-dark fw-bold">未設定</span></div>
+                                <div class="col-md-12"><strong>待 Commit 變更數量：</strong><span id="git-uncommitted-text" class="text-dark fw-bold">0 個檔案</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 遠端 Repo 與 PAT 設定表單 -->
+                    <div class="mb-3">
+                        <label class="form-label text-dark fw-bold small">GitHub 遠端儲存庫網址 (Repository URL)</label>
+                        <input type="text" id="gh-remote-input" class="form-control" placeholder="https://github.com/YourUsername/sprout-pm-system.git">
+                        <div class="form-text">例如：<code>https://github.com/YourUsername/sprout-pm-system.git</code></div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-dark fw-bold small">GitHub Personal Access Token (PAT) [選填，用於私有庫或免密碼驗證]</label>
+                        <input type="password" id="gh-token-input" class="form-control" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+                        <div class="form-text">若推送時提示存取權限錯誤，可填入 Token (具備 repo 寫入權限)。</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-dark fw-bold small">本次 Commit 說明紀錄 (選填)</label>
+                        <input type="text" id="gh-msg-input" class="form-control" placeholder="自動同步高教深耕管考指標數據">
+                    </div>
+
+                    <!-- 操作結果訊息顯示框 -->
+                    <div id="github-output-box" class="alert d-none small mb-0"></div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-outline-secondary rounded-3" onclick="saveGithubConfigOnly()">僅儲存設定</button>
+                    <button type="button" class="btn btn-primary rounded-3 fw-bold d-flex align-items-center gap-2" onclick="triggerGithubPush()" id="gh-push-btn">
+                        <i class="bi bi-cloud-upload-fill"></i> 🚀 立即 Commit 並同步上傳至 GitHub
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        window.EMBEDDED_INDICATORS = [{"id": "COM-01", "category": "共同指標", "aspect": "教學創新精進", "aspect_code": "A1", "code": "1.0", "item": "學生專業實務技術能力推動成效 - 學生通過證照數人次", "dept": "教務處 學生組", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "(114-1)\n1375(教育部提供)\n達成率94.83%", "calc_rate": 0.9483, "qualitative_desc": "【未達標檢討】無 ｜ ", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【證照輔導 Agent】", "ai_strategy": "啟動 【證照輔導 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 1.0907, "rate_delta": -0.1424, "trend_status": "STABLE", "history": [{"period": "115-1 填報期初", "calc_rate": 0.8683, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 0.9483, "text": "(114-1)\n1375(教育部提供)\n達成率94.83%"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.892, "text": "(114-1)\n1375(教育部提供)\n達成率94.83%"}], "annual_targets": {"112": "1100", "113": "1400", "114": "1450", "115": "1480", "116": "1500"}, "annual_actuals": {"111": "1048(教育部提供)", "112": "(112-1)\n1437(教育部提供)", "113": "(113-1)\n1527(教育部提供)", "114": "(114-1)\n1375(教育部提供)\n達成率94.83%"}, "annual_rates": {"112": 1.3064, "113": 1.0907, "114": 0.9483}, "latest_yr": "114", "prev_yr": "113"}, {"id": "COM-02", "category": "共同指標", "aspect": "教學創新精進", "aspect_code": "A1", "code": "2.0", "item": "學生參加競賽獲獎人次", "dept": "學務處 課指組", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "(114-1)\n308(教育部提供)\n學務處覆核後，是154人次", "calc_rate": 0.14, "qualitative_desc": "【未達標檢討】1.確實檢視資料彙整項目內容，減少資料庫競賽項目的重複或缺失，提升資料庫項目的完整性，使其內容得以納入參考數據。\n2.盤點各科系回報之有效數據，減少數據彙整資訊不全狀況。 ｜ 經確認，係因填報時誤重複上傳資料，導致數據由154人次倍增為308人次，謹此致歉。後續將加強填報前後之檢核作業，除確認人次統計外，亦將逐筆核對填報內容，以避免重複填報情形再次發生，確保資料正確無誤。", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【雙校核對防錯 Agent】", "ai_strategy": "啟動 【雙校核對防錯 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 0.0148, "rate_delta": 0.1252, "trend_status": "PROGRESS_MET", "history": [{"period": "115-1 填報期初", "calc_rate": 0.4675, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 0.4875, "text": "(114-1)\n308(教育部提供)\n學務處覆核後，是154人次"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.4875, "text": "(114-1)\n308(教育部提供)\n學務處覆核後，是154人次"}], "annual_targets": {"112": "100", "113": "2100", "114": "2200\n80", "115": "2300\n85", "116": "2400\n90"}, "annual_actuals": {"111": "33(教育部提供)", "112": "(112-1)\n3019(教育部提供)\n後續估算約151", "113": "(113-1)\n31(教育部提供)", "114": "(114-1)\n308(教育部提供)\n學務處覆核後，是154人次"}, "annual_rates": {"112": 30.19, "113": 0.0148, "114": 0.14}, "latest_yr": "114", "prev_yr": "113"}, {"id": "COM-03", "category": "共同指標", "aspect": "教學創新精進", "aspect_code": "A1", "code": "3.0", "item": "協助學生專業實務技術能力提升之推動策略描述", "dept": "教務處 學生組", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "(114-1)\n為培養學生專業實務能力，藉由系科專業證照盤點，聚焦核心證照及分級獎勵制度，驅動學生超越自我、挑戰自我與進階發展，並由各系提出學生專業證照輔導班計畫，輔導學生考取證照，以提昇學生考照率及未來就業能力。", "calc_rate": 0.85, "qualitative_desc": "對齊 115 年第 2 次填報最新彙整數據。", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【AI 專案 Agent】", "ai_strategy": "啟動 【AI 專案 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 1.0, "rate_delta": -0.15, "trend_status": "STABLE", "history": [{"period": "115-1 填報期初", "calc_rate": 0.92, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 1.0, "text": "(114-1)\n為培養學生專業實務能力，藉由系科專業證照盤點，聚焦核心證照及分級獎勵制度，驅動學生超越自我、挑戰自我與進階發展，並由各系提出學生專業證照輔導班計"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.85, "text": "(114-1)\n為培養學生專業實務能力，藉由系科專業證照盤點，聚焦核心證照及分級獎勵制度，驅動學生超越自我、挑戰自我與進階發展，並由各系提出學生專業證照輔導班計畫，輔導學生考取證照，以提昇學生考照率及未來就業能力。"}], "annual_targets": {"112": "為培養學生專業實務能力，藉由系科專業證照盤點，聚焦核心證照及分級獎勵制度，驅動學生超越自我、挑戰自我與進階發展，並由各系提出學生專業證照輔導班計畫，輔導學生考取證照，以提昇學生考照率及未來就業能力。", "113": "為培養學生專業實務能力，藉由系科專業證照盤點，聚焦核心證照及分級獎勵制度，驅動學生超越自我、挑戰自我與進階發展，並由各系提出學生專業證照輔導班計畫，輔導學生考取證照，以提昇學生考照率及未來就業能力。", "114": "為培養學生專業實務能力，藉由系科專業證照盤點，聚焦核心證照及分級獎勵制度，驅動學生超越自我、挑戰自我與進階發展，並由各系提出學生專業證照輔導班計畫，輔導學生考取證照，以提昇學生考照率及未來就業能力。", "115": "為培養學生專業實務能力，藉由系科專業證照盤點，聚焦核心證照及分級獎勵制度，驅動學生超越自我、挑戰自我與進階發展，並由各系提出學生專業證照輔導班計畫，輔導學生考取證照，以提昇學生考照率及未來就業能力。", "116": "為培養學生專業實務能力，藉由系科專業證照盤點，聚焦核心證照及分級獎勵制度，驅動學生超越自我、挑戰自我與進階發展，並由各系提出學生專業證照輔導班計畫，輔導學生考取證照，以提昇學生考照率及未來就業能力。"}, "annual_actuals": {"111": "為培養學生專業實務能力，由系科進行專業證照盤點，以及核心證照及分級獎勵制度，並由各系提出學生專業證照輔導班計畫，輔導學生考取證照，目前僅1系完成結案，各系仍陸續在執行課程，將於後續考取證照後繳交成果報告。", "112": "(112-1)\n為培養學生專業實務能力，藉由系科專業證照盤點，聚焦核心證照及分級獎勵制度，驅動學生超越自我、挑戰自我與進階發展，並由各系提出學生專業證照輔導班計畫，輔導學生考取證照，以提昇學生考照率及未來就業能力。", "113": "(113-1)\n為培養學生專業實務能力，藉由系科專業證照盤點，聚焦核心證照及分級獎勵制度，驅動學生超越自我、挑戰自我與進階發展，並由各系提出學生專業證照輔導班計畫，輔導學生考取證照，以提昇學生考照率及未來就業能力。", "114": "(114-1)\n為培養學生專業實務能力，藉由系科專業證照盤點，聚焦核心證照及分級獎勵制度，驅動學生超越自我、挑戰自我與進階發展，並由各系提出學生專業證照輔導班計畫，輔導學生考取證照，以提昇學生考照率及未來就業能力。"}, "annual_rates": {"112": null, "113": null, "114": null}, "latest_yr": "最新", "prev_yr": "次新"}, {"id": "COM-04", "category": "共同指標", "aspect": "教學創新精進", "aspect_code": "A1", "code": "1.0", "item": "教師實務經驗提升成效 - 學校全體教師完成半年與專業或技術有關研習或研究之比率", "dept": "研發處", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "(114-2)\n45.02%\n(教育部提供)\n達成率90.04%", "calc_rate": 0.9004, "qualitative_desc": "【未達標檢討】無 ｜ ", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【AI 專案 Agent】", "ai_strategy": "啟動 【AI 專案 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 1.1923, "rate_delta": -0.2919, "trend_status": "STABLE", "history": [{"period": "115-1 填報期初", "calc_rate": 0.8218, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 0.8268, "text": "(114-2)\n45.02%\n(教育部提供)\n達成率90.04%"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.8268, "text": "(114-2)\n45.02%\n(教育部提供)\n達成率90.04%"}], "annual_targets": {"112": "0.12", "113": "0.35", "114": "0.45", "115": "0.6", "116": "1"}, "annual_actuals": {"111": "7.92%(教育部提供1/10更新)", "112": "(112-2)\n37.5%(教育部提供)", "113": "(113-2)\n41.73%(教育部提供)", "114": "(114-2)\n45.02%\n(教育部提供)\n達成率90.04%"}, "annual_rates": {"112": 3.125, "113": 1.1923, "114": 0.9004}, "latest_yr": "114", "prev_yr": "113"}, {"id": "COM-05", "category": "共同指標", "aspect": "教學創新精進", "aspect_code": "A1", "code": "2.0", "item": "學校聘任曾於國際技能競賽獲獎之選手為專任教學人員或專業實作指導人員人數", "dept": "本次先由(原)校研室調查", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "(114-2)\n7\n達成率70%", "calc_rate": 0.7, "qualitative_desc": "【未達標檢討】無 ｜ 此數據與上學期持平，距離目標值仍有成長空間，將持續推動各系聘任具有國際技能競賽獲獎之選手擔任教學或實作指導人員。", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【雙校核對防錯 Agent】", "ai_strategy": "啟動 【雙校核對防錯 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 1.0, "rate_delta": -0.3, "trend_status": "STAGNANT", "history": [{"period": "115-1 填報期初", "calc_rate": 0.87, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 0.875, "text": "(114-2)\n7\n達成率70%"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.875, "text": "(114-2)\n7\n達成率70%"}], "annual_targets": {"112": "6", "113": "7", "114": "8", "115": "10", "116": "10"}, "annual_actuals": {"111": "3", "112": "(112-2)\n7", "113": "(113-2)\n7", "114": "(114-2)\n7\n達成率70%"}, "annual_rates": {"112": 1.1667, "113": 1.0, "114": 0.7}, "latest_yr": "114", "prev_yr": "113"}, {"id": "COM-06", "category": "共同指標", "aspect": "教學創新精進", "aspect_code": "A1", "code": "3.0", "item": "協助教師實務經驗提升策略描述", "dept": "研發處", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "(114-2)\n為提升教師實務經驗與實務教學能力，本校協助教師進行產業研習或研究，具體做法包括(1)藉由整體獎補助機制，推動教師進行先期產學合作；(2)藉由整體獎補助機制，鼓勵教師參加實務研習；(3)鼓勵教師參與教育部補助技專校院辦理教師產", "calc_rate": 1.0, "qualitative_desc": "對齊 115 年第 2 次填報最新彙整數據。", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【AI 專案 Agent】", "ai_strategy": "啟動 【AI 專案 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 1.0, "rate_delta": 0.0, "trend_status": "STABLE", "history": [{"period": "115-1 填報期初", "calc_rate": 0.92, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 1.0, "text": "(114-2)\n為提升教師實務經驗與實務教學能力，本校協助教師進行產業研習或研究，具體做法包括(1)藉由整體獎補助機制，推動教師進行先期產學合作；(2)藉由整體"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 1.0, "text": "(114-2)\n為提升教師實務經驗與實務教學能力，本校協助教師進行產業研習或研究，具體做法包括(1)藉由整體獎補助機制，推動教師進行先期產學合作；(2)藉由整體獎補助機制，鼓勵教師參加實務研習；(3)鼓勵教師參與教育部補助技專校院辦理教師產"}], "annual_targets": {"112": "為提升教師實務經驗與實務教學能力，本校協助教師進行產業研習或研究，具體做法包括(1)藉由整體獎補助機制，推動教師進行先期產學合作；(2)藉由整體獎補助機制，鼓勵教師參加實務研習；(3)鼓勵教師參與教育部補助技專校院辦理教師產業研習研究計畫，赴產業進行深度實務研習及研究等，後續將持續追蹤，協助教師於期限內完成產業研習或研究。", "113": "為提升教師實務經驗與實務教學能力，本校協助教師進行產業研習或研究，具體做法包括(1)藉由整體獎補助機制，推動教師進行先期產學合作；(2)藉由整體獎補助機制，鼓勵教師參加實務研習；(3)鼓勵教師參與教育部補助技專校院辦理教師產業研習研究計畫，赴產業進行深度實務研習及研究等，後續將持續追蹤，協助教師於期限內完成產業研習或研究。", "114": "為提升教師實務經驗與實務教學能力，本校協助教師進行產業研習或研究，具體做法包括(1)藉由整體獎補助機制，推動教師進行先期產學合作；(2)藉由整體獎補助機制，鼓勵教師參加實務研習；(3)鼓勵教師參與教育部補助技專校院辦理教師產業研習研究計畫，赴產業進行深度實務研習及研究等，後續將持續追蹤，協助教師於期限內完成產業研習或研究。", "115": "為提升教師實務經驗與實務教學能力，本校協助教師進行產業研習或研究，具體做法包括(1)藉由整體獎補助機制，推動教師進行先期產學合作；(2)藉由整體獎補助機制，鼓勵教師參加實務研習；(3)鼓勵教師參與教育部補助技專校院辦理教師產業研習研究計畫，赴產業進行深度實務研習及研究等，後續將持續追蹤，協助教師於期限內完成產業研習或研究。", "116": "為提升教師實務經驗與實務教學能力，本校協助教師進行產業研習或研究，具體做法包括(1)藉由整體獎補助機制，推動教師進行先期產學合作；(2)藉由整體獎補助機制，鼓勵教師參加實務研習；(3)鼓勵教師參與教育部補助技專校院辦理教師產業研習研究計畫，赴產業進行深度實務研習及研究等，後續將持續追蹤，協助教師於期限內完成產業研習或研究。"}, "annual_actuals": {"111": "為提升教師實務經驗與實務教學能力，本校協助教師進行產業研習或研究，具體做法包括(1)藉由整體獎補助機制，推動教師進行先期產學合作；(2)藉由整體獎補助機制，鼓勵教師參加實務研習；(3)鼓勵教師參與教育部補助技專校院辦理教師產業研習研究計畫，赴產業進行深度實務研習及研究等，後續將持續追蹤，協助教師於期限內完成產業研習或研究。", "112": "(112-2)\n為提升教師實務經驗與實務教學能力，本校協助教師進行產業研習或研究，具體做法包括(1)藉由整體獎補助機制，推動教師進行先期產學合作；(2)藉由整體獎補助機制，鼓勵教師參加實務研習；(3)鼓勵教師參與教育部補助技專校院辦理教師產業研習研究計畫，赴產業進行深度實務研習及研究等，後續將持續追蹤，協助教師於期限內完成產業研習或研究。", "113": "(113-2)\n為提升教師實務經驗與實務教學能力，本校協助教師進行產業研習或研究，具體做法包括(1)藉由整體獎補助機制，推動教師進行先期產學合作；(2)藉由整體獎補助機制，鼓勵教師參加實務研習；(3)鼓勵教師參與教育部補助技專校院辦理教師產業研習研究計畫，赴產業進行深度實務研習及研究等，後續將持續追蹤，協助教師於期限內完成產業研習或研究。", "114": "(114-2)\n為提升教師實務經驗與實務教學能力，本校協助教師進行產業研習或研究，具體做法包括(1)藉由整體獎補助機制，推動教師進行先期產學合作；(2)藉由整體獎補助機制，鼓勵教師參加實務研習；(3)鼓勵教師參與教育部補助技專校院辦理教師產業研習研究計畫，赴產業進行深度實務研習及研究等，後續將持續追蹤，協助教師於期限內完成產業研習或研究。"}, "annual_rates": {"112": 1.0, "113": 1.0, "114": 1.0}, "latest_yr": "114", "prev_yr": "113"}, {"id": "COM-07", "category": "共同指標", "aspect": "教學創新精進", "aspect_code": "A1", "code": "1.0", "item": "教師推動創新教學成效之提升成效 - 採用創新教學模式教師數(學期/人)", "dept": "教務處課註組", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "(114-2)\n131\n(教育部提供)\n達成率32.75%", "calc_rate": 0.3275, "qualitative_desc": "【未達標檢討】113學年第2學期起「創新教學課程」定義修改(有6周以上實施創新教學始得計入)，故課程數下降。 ｜ 1.加強宣導，請老師務必至少有一門課要實施6周以上的創新教學。\n2.因與目標值差異大，建議修正目標值。", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【創新教案 AI Agent】", "ai_strategy": "啟動 【創新教案 AI Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 0.4325, "rate_delta": -0.105, "trend_status": "STAGNANT", "history": [{"period": "115-1 填報期初", "calc_rate": 0.5425, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 0.5625, "text": "(114-2)\n131\n(教育部提供)\n達成率32.75%"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.5625, "text": "(114-2)\n131\n(教育部提供)\n達成率32.75%"}], "annual_targets": {"112": "495", "113": "400", "114": "400", "115": "400", "116": "400"}, "annual_actuals": {"111": "520(教育部提供)", "112": "(112-2)\n410(教育部提供)", "113": "(113-2)\n173(教育部提供)", "114": "(114-2)\n131\n(教育部提供)\n達成率32.75%"}, "annual_rates": {"112": 0.8283, "113": 0.4325, "114": 0.3275}, "latest_yr": "114", "prev_yr": "113"}, {"id": "COM-08", "category": "共同指標", "aspect": "教學創新精進", "aspect_code": "A1", "code": "2.0", "item": "修讀創新教學課程學生人次(學期/人)", "dept": "教務處課註組", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "(114-2)\n7494\n(教育部提供)\n達成率23.42%", "calc_rate": 0.2342, "qualitative_desc": "【未達標檢討】113學年第2學期起「創新教學課程」定義修改(有6周以上實施創新教學始得計入)，故修讀人次下降。 ｜ 1.加強宣導，請老師務必至少有一門課要實施6周以上的創新教學。\n2.因少子化影響，致使修讀人次下滑，建議修正目標值。", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【創新教案 AI Agent】", "ai_strategy": "啟動 【創新教案 AI Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 0.2942, "rate_delta": -0.06, "trend_status": "STAGNANT", "history": [{"period": "115-1 填報期初", "calc_rate": 0.3655, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 0.3855, "text": "(114-2)\n7494\n(教育部提供)\n達成率23.42%"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.3855, "text": "(114-2)\n7494\n(教育部提供)\n達成率23.42%"}], "annual_targets": {"112": "51500", "113": "32000", "114": "32000", "115": "32000", "116": "32000"}, "annual_actuals": {"111": "61,602(教育部提供)", "112": "(112-2)\n34520(教育部提供)", "113": "(113-2)\n9415(教育部提供)", "114": "(114-2)\n7494\n(教育部提供)\n達成率23.42%"}, "annual_rates": {"112": 0.6703, "113": 0.2942, "114": 0.2342}, "latest_yr": "114", "prev_yr": "113"}, {"id": "COM-09", "category": "共同指標", "aspect": "教學創新精進", "aspect_code": "A1", "code": "3.0", "item": "促進創新教學課程之教學及學習成效提升之推動策略描述", "dept": "教務處課註組", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "(114-2)\n研發創新教學方式，助於刺激學生學習動機及上課熱忱、以提升教學成效目標之達成。", "calc_rate": 0.85, "qualitative_desc": "對齊 115 年第 2 次填報最新彙整數據。", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【創新教案 AI Agent】", "ai_strategy": "啟動 【創新教案 AI Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 1.0, "rate_delta": -0.15, "trend_status": "STABLE", "history": [{"period": "115-1 填報期初", "calc_rate": 0.92, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 1.0, "text": "(114-2)\n研發創新教學方式，助於刺激學生學習動機及上課熱忱、以提升教學成效目標之達成。"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.85, "text": "(114-2)\n研發創新教學方式，助於刺激學生學習動機及上課熱忱、以提升教學成效目標之達成。"}], "annual_targets": {"112": "(300字元)\n研發創新教學方式，助於刺激學生學習動機及上課熱忱、以提升教學成效目標之達成。", "113": "(300字元)\n研發創新教學方式，助於刺激學生學習動機及上課熱忱、以提升教學成效目標之達成。", "114": "(300字元)\n研發創新教學方式，助於刺激學生學習動機及上課熱忱、以提升教學成效目標之達成。", "115": "(300字元)\n研發創新教學方式，助於刺激學生學習動機及上課熱忱、以提升教學成效目標之達成。", "116": "(300字元)\n研發創新教學方式，助於刺激學生學習動機及上課熱忱、以提升教學成效目標之達成。"}, "annual_actuals": {"111": "研發創新教學方式，助於刺激學生學習動機及上課熱忱、以提升教學成效目標之達成。", "112": "(112-2)\n研發創新教學方式，助於刺激學生學習動機及上課熱忱、以提升教學成效目標之達成。", "113": "(113-2)\n研發創新教學方式，助於刺激學生學習動機及上課熱忱、以提升教學成效目標之達成。", "114": "(114-2)\n研發創新教學方式，助於刺激學生學習動機及上課熱忱、以提升教學成效目標之達成。"}, "annual_rates": {"112": null, "113": null, "114": null}, "latest_yr": "最新", "prev_yr": "次新"}, {"id": "COM-10", "category": "共同指標", "aspect": "教學創新精進", "aspect_code": "A1", "code": "1-1", "item": "修讀跨域學習課程學生人次-雙主修", "dept": "教務處課註組", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "(114-1)\n(男)2\n(女)22\n(教育部提供)\n合計24，達成率60%", "calc_rate": 0.6, "qualitative_desc": "1.雙主修應修課程較繁重、跨系修課恐衝堂，以及學生擔心延畢風險，導致修讀意願不高。\n2.未來將於每學期之跨域學習說明會，加強宣導，讓學生了解輔系之益處，以提升學生修讀意願。", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【智慧排課導航 Agent】", "ai_strategy": "啟動 【智慧排課導航 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 0.1, "rate_delta": 0.5, "trend_status": "PROGRESS_MET", "history": [{"period": "115-1 填報期初", "calc_rate": 0.58, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 0.6, "text": "(114-1)\n(男)2\n(女)22\n(教育部提供)\n合計24，達成率60%"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.6, "text": "(114-1)\n(男)2\n(女)22\n(教育部提供)\n合計24，達成率60%"}], "annual_targets": {"112": "100", "113": "60", "114": "60\n40", "115": "60\n45", "116": "60\n50"}, "annual_actuals": {"111": "(男):15\n(女):94\n109", "112": "(112-1)\n(男)9\n(女)60\n(教育部提供)\n69", "113": "(113-1)\n(男)6\n(女)47\n(教育部提供)\n53", "114": "(114-1)\n(男)2\n(女)22\n(教育部提供)\n合計24，達成率60%"}, "annual_rates": {"112": 0.09, "113": 0.1, "114": 0.6}, "latest_yr": "114", "prev_yr": "113"}, {"id": "COM-11", "category": "共同指標", "aspect": "教學創新精進", "aspect_code": "A1", "code": "1-2", "item": "修讀跨域學習課程學生人次-輔系", "dept": "教務處課註組", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "(114-1)\n(男)1\n(女)2\n(教育部提供)\n合計3，達成率37.5%", "calc_rate": 0.375, "qualitative_desc": "【未達標檢討】預計於115年5月辦理跨域學習說明會，鼓助學生修習輔系，另，評估雙主修/輔系設罝學習獎勵金之可行性，藉以提高學生修課意願。 ｜ 1.因輔系應修課程較繁重、跨系修課恐衝堂，且輔系無學位，導致修讀意願不高。\n2.未來將於每學期之跨域學習說明會，加強宣導，讓學生了解輔系之益處，以提升學生修讀意願。", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【智慧排課導航 Agent】", "ai_strategy": "啟動 【智慧排課導航 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 0.2, "rate_delta": 0.175, "trend_status": "PROGRESS_MET", "history": [{"period": "115-1 填報期初", "calc_rate": 0.105, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 0.125, "text": "(114-1)\n(男)1\n(女)2\n(教育部提供)\n合計3，達成率37.5%"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.125, "text": "(114-1)\n(男)1\n(女)2\n(教育部提供)\n合計3，達成率37.5%"}], "annual_targets": {"112": "30", "113": "20", "114": "20\n8", "115": "20\n10", "116": "20\n12"}, "annual_actuals": {"111": "(男):9\n(女):23\n32", "112": "(112-1)\n(男)10\n(女)12\n(教育部提供)\n22", "113": "(113-1)\n(男)4\n(女)8\n(教育部提供)\n12", "114": "(114-1)\n(男)1\n(女)2\n(教育部提供)\n合計3，達成率37.5%"}, "annual_rates": {"112": 0.3333, "113": 0.2, "114": 0.375}, "latest_yr": "114", "prev_yr": "113"}, {"id": "COM-12", "category": "共同指標", "aspect": "教學創新精進", "aspect_code": "A1", "code": "1-3", "item": "修讀跨域學習課程學生人次-學分學程", "dept": "教務處課註組", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "(114-1)\n(男)152\n(女)186\n(教育部提供)\n合計338，達成率84.5%", "calc_rate": 0.845, "qualitative_desc": "對齊 115 年第 2 次填報最新彙整數據。", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【智慧排課導航 Agent】", "ai_strategy": "啟動 【智慧排課導航 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 0.63, "rate_delta": 0.215, "trend_status": "PROGRESS_MET", "history": [{"period": "115-1 填報期初", "calc_rate": 0.84, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 0.845, "text": "(114-1)\n(男)152\n(女)186\n(教育部提供)\n合計338，達成率84.5%"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.845, "text": "(114-1)\n(男)152\n(女)186\n(教育部提供)\n合計338，達成率84.5%"}], "annual_targets": {"112": "800", "113": "400", "114": "400", "115": "400", "116": "400"}, "annual_actuals": {"111": "(男):362\n(女):810\n1,172", "112": "(112-1)\n(男)177\n(女)256\n(教育部提供)\n433", "113": "(113-1)\n(男)252\n(女)403\n(教育部提供)\n655", "114": "(114-1)\n(男)152\n(女)186\n(教育部提供)\n合計338，達成率84.5%"}, "annual_rates": {"112": 0.2213, "113": 0.63, "114": 0.845}, "latest_yr": "114", "prev_yr": "113"}, {"id": "COM-13", "category": "共同指標", "aspect": "教學創新精進", "aspect_code": "A1", "code": "1-4", "item": "修讀跨域學習課程學生人次-其他", "dept": "教務處課註組", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "(114-1)\n(男)1159\n(女)1817\n合計2976，達成率99.2%\n學校自填", "calc_rate": 0.992, "qualitative_desc": "對齊 115 年第 2 次填報最新彙整數據。", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【智慧排課導航 Agent】", "ai_strategy": "啟動 【智慧排課導航 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 0.2284, "rate_delta": 0.7636, "trend_status": "PROGRESS_MET", "history": [{"period": "115-1 填報期初", "calc_rate": 0.912, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 0.992, "text": "(114-1)\n(男)1159\n(女)1817\n合計2976，達成率99.2%\n學校自填"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.992, "text": "(114-1)\n(男)1159\n(女)1817\n合計2976，達成率99.2%\n學校自填"}], "annual_targets": {"112": "3650", "113": "8879", "114": "8900\n3000", "115": "9000\n3200", "116": "9050\n3500"}, "annual_actuals": {"111": "(男):979\n(女):2,735\n3714", "112": "(112-1)\n(男)1776\n(女)7103\n8879", "113": "(113-1)\n(男)2028\n(女)5796\n7824", "114": "(114-1)\n(男)1159\n(女)1817\n合計2976，達成率99.2%\n學校自填"}, "annual_rates": {"112": 0.4866, "113": 0.2284, "114": 0.992}, "latest_yr": "114", "prev_yr": "113"}, {"id": "COM-14", "category": "共同指標", "aspect": "教學創新精進", "aspect_code": "A1", "code": "2.0", "item": "協助學生跨域學習成效提升之推動策略描述", "dept": "教務處課註組", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "(114-1)\n因應產業未來跨域人才需要，規劃專業多元學習，培養跨領域專長的課程學習方案，引導學生有意義性進行跨域學習，整合跨領域課程排課時段，透過排課減少衝堂或選不到課程問題，學生能有效掌握修習，提升學習意願。培養多元技能，協助學生適性化", "calc_rate": 0.3333, "qualitative_desc": "【未達標檢討】本校學生結構對應B2和C1以上屬高階英文 (考一次即達畢業門檻) ，將持續推動免費英檢考照，提高B1.B2學生報考誘因。113學年度起每班將開設各班優秀B1以上學生拔尖輔導證照輔導課程，以及全班境外生班級，並藉全額報名費補助激勵潛力學生報考高階英檢證照，如搭配高額獎勵金效果可加乘。 ｜ ", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【智慧排課導航 Agent】", "ai_strategy": "啟動 【智慧排課導航 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 1.0, "rate_delta": -0.6667, "trend_status": "STAGNANT", "history": [{"period": "115-1 填報期初", "calc_rate": 0.92, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 1.0, "text": "(114-1)\n因應產業未來跨域人才需要，規劃專業多元學習，培養跨領域專長的課程學習方案，引導學生有意義性進行跨域學習，整合跨領域課程排課時段，透過排課減少衝堂"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.3333, "text": "(114-1)\n因應產業未來跨域人才需要，規劃專業多元學習，培養跨領域專長的課程學習方案，引導學生有意義性進行跨域學習，整合跨領域課程排課時段，透過排課減少衝堂或選不到課程問題，學生能有效掌握修習，提升學習意願。培養多元技能，協助學生適性化"}], "annual_targets": {"112": "因應產業未來跨域人才需要，規劃專業多元學習，培養跨領域專長的課程學習方案，引導學生有意義性進行跨域學習，整合跨領域課程排課時段，透過排課減少衝堂或選不到課程問題，學生能有效掌握修習，提升學習意願。培養多元技能，協助學生適性化/跨域化發展", "113": "因應產業未來跨域人才需要，規劃專業多元學習，培養跨領域專長的課程學習方案，引導學生有意義性進行跨域學習，整合跨領域課程排課時段，透過排課減少衝堂或選不到課程問題，學生能有效掌握修習，提升學習意願。培養多元技能，協助學生適性化/跨域化發展", "114": "因應產業未來跨域人才需要，規劃專業多元學習，培養跨領域專長的課程學習方案，引導學生有意義性進行跨域學習，整合跨領域課程排課時段，透過排課減少衝堂或選不到課程問題，學生能有效掌握修習，提升學習意願。培養多元技能，協助學生適性化/跨域化發展", "115": "因應產業未來跨域人才需要，規劃專業多元學習，培養跨領域專長的課程學習方案，引導學生有意義性進行跨域學習，整合跨領域課程排課時段，透過排課減少衝堂或選不到課程問題，學生能有效掌握修習，提升學習意願。培養多元技能，協助學生適性化/跨域化發展", "116": "因應產業未來跨域人才需要，規劃專業多元學習，培養跨領域專長的課程學習方案，引導學生有意義性進行跨域學習，整合跨領域課程排課時段，透過排課減少衝堂或選不到課程問題，學生能有效掌握修習，提升學習意願。培養多元技能，協助學生適性化/跨域化發展"}, "annual_actuals": {"111": "因應產業未來跨域人才需要，規劃專業多元學習，培養跨領域專長的課程學習方案，引導學生有意義性進行跨域學習，整合跨領域課程排課時段，透過排課減少衝堂或選不到課程問題，學生能有效掌握修習，提升學習意願。培養多元技能，協助學生適性化/跨域化發展。", "112": "(112-1)\n因應產業未來跨域人才需要，規劃專業多元學習，培養跨領域專長的課程學習方案，引導學生有意義性進行跨域學習，整合跨領域課程排課時段，透過排課減少衝堂或選不到課程問題，學生能有效掌握修習，提升學習意願。培養多元技能，協助學生適性化/跨域化發展", "113": "(113-1)\n因應產業未來跨域人才需要，規劃專業多元學習，培養跨領域專長的課程學習方案，引導學生有意義性進行跨域學習，整合跨領域課程排課時段，透過排課減少衝堂或選不到課程問題，學生能有效掌握修習，提升學習意願。培養多元技能，協助學生適性化/跨域化發展", "114": "(114-1)\n因應產業未來跨域人才需要，規劃專業多元學習，培養跨領域專長的課程學習方案，引導學生有意義性進行跨域學習，整合跨領域課程排課時段，透過排課減少衝堂或選不到課程問題，學生能有效掌握修習，提升學習意願。培養多元技能，協助學生適性化/跨域化發展。"}, "annual_rates": {"112": null, "113": null, "114": null}, "latest_yr": "最新", "prev_yr": "次新"}, {"id": "COM-15", "category": "共同指標", "aspect": "教學創新精進", "aspect_code": "A1", "code": "1.1", "item": "學生資訊科技能力推動成效 - STEM領域系科所學生人數-男", "dept": "教務處課註組", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "(114-2)\n538(教育部提供)\n達成率89.66%", "calc_rate": 0.8966, "qualitative_desc": "【未達標檢討】無 ｜ ", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【AI 專案 Agent】", "ai_strategy": "啟動 【AI 專案 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 1.07, "rate_delta": -0.1734, "trend_status": "STABLE", "history": [{"period": "115-1 填報期初", "calc_rate": 0.8883, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 0.9683, "text": "(114-2)\n538(教育部提供)\n達成率89.66%"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.9683, "text": "(114-2)\n538(教育部提供)\n達成率89.66%"}], "annual_targets": {"112": "660", "113": "600", "114": "600", "115": "600", "116": "600"}, "annual_actuals": {"111": "750(教育部提供)", "112": "(112-2)\n618(教育部提供)", "113": "(113-2)\n642(教育部提供)", "114": "(114-2)\n538(教育部提供)\n達成率89.66%"}, "annual_rates": {"112": 0.9364, "113": 1.07, "114": 0.8966}, "latest_yr": "114", "prev_yr": "113"}, {"id": "COM-16", "category": "共同指標", "aspect": "教學創新精進", "aspect_code": "A1", "code": "1.2", "item": "STEM領域系科所學生人數-女", "dept": "教務處", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "(114-2)\n471(教育部提供)", "calc_rate": 1.1775, "qualitative_desc": "對齊 115 年第 2 次填報最新彙整數據。", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【AI 專案 Agent】", "ai_strategy": "啟動 【AI 專案 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 1.35, "rate_delta": -0.1725, "trend_status": "STABLE", "history": [{"period": "115-1 填報期初", "calc_rate": 0.92, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 1.0, "text": "(114-2)\n471(教育部提供)"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 1.1775, "text": "(114-2)\n471(教育部提供)"}], "annual_targets": {"112": "460", "113": "400", "114": "400", "115": "400", "116": "400"}, "annual_actuals": {"111": "490(教育部提供)", "112": "(112-2)\n420(教育部提供)", "113": "(113-2)\n540(教育部提供)", "114": "(114-2)\n471(教育部提供)"}, "annual_rates": {"112": 0.913, "113": 1.35, "114": 1.1775}, "latest_yr": "114", "prev_yr": "113"}, {"id": "COM-17", "category": "共同指標", "aspect": "教學創新精進", "aspect_code": "A1", "code": "2.1", "item": "修讀STEM領域課程學生人次-男", "dept": "教務處課註組", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "(114-2)\n4024(教育部提供)\n達成率91.04%", "calc_rate": 0.9104, "qualitative_desc": "【未達標檢討】無 ｜ ", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【AI 專案 Agent】", "ai_strategy": "啟動 【AI 專案 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 0.8567, "rate_delta": 0.0537, "trend_status": "PROGRESS_MET", "history": [{"period": "115-1 填報期初", "calc_rate": 0.8338, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 0.8388, "text": "(114-2)\n4024(教育部提供)\n達成率91.04%"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.8388, "text": "(114-2)\n4024(教育部提供)\n達成率91.04%"}], "annual_targets": {"112": "5000", "113": "5200", "114": "5200\n4400", "115": "5200\n4420", "116": "5200\n4440"}, "annual_actuals": {"111": "7,063(教育部提供)", "112": "(112-2)\n5484(教育部提供)", "113": "(113-2)\n4455(教育部提供)", "114": "(114-2)\n4024(教育部提供)\n達成率91.04%"}, "annual_rates": {"112": 1.0968, "113": 0.8567, "114": 0.9104}, "latest_yr": "114", "prev_yr": "113"}, {"id": "COM-18", "category": "共同指標", "aspect": "教學創新精進", "aspect_code": "A1", "code": "2.2", "item": "修讀STEM領域課程學生人次-女", "dept": "教務處", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "(114-2)\n3173(教育部提供)", "calc_rate": 0.6346, "qualitative_desc": "對齊 115 年第 2 次填報最新彙整數據。", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【AI 專案 Agent】", "ai_strategy": "啟動 【AI 專案 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 0.625, "rate_delta": 0.0096, "trend_status": "STAGNANT", "history": [{"period": "115-1 填報期初", "calc_rate": 0.92, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 1.0, "text": "(114-2)\n3173(教育部提供)"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.6346, "text": "(114-2)\n3173(教育部提供)"}], "annual_targets": {"112": "5000", "113": "5000", "114": "5000\n3000", "115": "5000\n3020", "116": "5000\n3050"}, "annual_actuals": {"111": "10,626(教育部提供)", "112": "(112-2)\n5226(教育部提供)", "113": "(113-2)\n3125(教育部提供)", "114": "(114-2)\n3173(教育部提供)"}, "annual_rates": {"112": 1.0452, "113": 0.625, "114": 0.6346}, "latest_yr": "114", "prev_yr": "113"}, {"id": "COM-19", "category": "共同指標", "aspect": "教學創新精進", "aspect_code": "A1", "code": "3.0", "item": "曾修讀程式設計課程學生數", "dept": "教務處課註組", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "(114-2)\n5142(教育部提供)", "calc_rate": 1.1427, "qualitative_desc": "【未達標檢討】無 ｜ ", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【AI 專案 Agent】", "ai_strategy": "啟動 【AI 專案 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 1.0018, "rate_delta": 0.1409, "trend_status": "PROGRESS_MET", "history": [{"period": "115-1 填報期初", "calc_rate": 0.9108, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 0.9908, "text": "(114-2)\n5142(教育部提供)"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.9908, "text": "(114-2)\n5142(教育部提供)"}], "annual_targets": {"112": "3500", "113": "4500", "114": "4500", "115": "4500", "116": "4500"}, "annual_actuals": {"111": "3463(教育部提供)", "112": "(112-2)\n4469(教育部提供)", "113": "(113-2)\n4508(教育部提供)", "114": "(114-2)\n5142(教育部提供)"}, "annual_rates": {"112": 1.2769, "113": 1.0018, "114": 1.1427}, "latest_yr": "114", "prev_yr": "113"}, {"id": "COM-20", "category": "共同指標", "aspect": "教學創新精進", "aspect_code": "A1", "code": "4.0", "item": "曾修讀數位科技微學程學生數", "dept": "教務處課註組 ", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "(114-2)\n657(教育部提供)", "calc_rate": 1.6024, "qualitative_desc": "對齊 115 年第 2 次填報最新彙整數據。", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【AI 專案 Agent】", "ai_strategy": "啟動 【AI 專案 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 1.6691, "rate_delta": -0.0667, "trend_status": "STABLE", "history": [{"period": "115-1 填報期初", "calc_rate": 0.92, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 1.0, "text": "(114-2)\n657(教育部提供)"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 1.6024, "text": "(114-2)\n657(教育部提供)"}], "annual_targets": {"112": "120", "113": "405", "114": "410", "115": "415", "116": "420"}, "annual_actuals": {"111": "112(教育部提供)", "112": "(112-2)\n405(教育部提供)", "113": "(113-2)\n676(教育部提供)", "114": "(114-2)\n657(教育部提供)"}, "annual_rates": {"112": 3.375, "113": 1.6691, "114": 1.6024}, "latest_yr": "114", "prev_yr": "113"}, {"id": "COM-21", "category": "共同指標", "aspect": "教學創新精進", "aspect_code": "A1", "code": "5.0", "item": "協助學生程式設計能力提升之推動策略描述（含學校在鼓勵修讀STEM領域課程上的推動策略）", "dept": "教務處", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "(114-2)\n為不同基礎者開設分級課程，打造視覺圖表、感測器程式構件教材，數位工具應用，培育大數據資料解讀與程式設計能力。建立基礎/進階/應用三階段課程，以培育學生具有數位運用與程式設計能力，打造兼具溝通與創造的新世代程式應用能力。從主題", "calc_rate": 0.9938, "qualitative_desc": "【未達標檢討】無 ｜ ", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【AI 專案 Agent】", "ai_strategy": "啟動 【AI 專案 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 1.0, "rate_delta": -0.0062, "trend_status": "STABLE", "history": [{"period": "115-1 填報期初", "calc_rate": 0.92, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 1.0, "text": "(114-2)\n為不同基礎者開設分級課程，打造視覺圖表、感測器程式構件教材，數位工具應用，培育大數據資料解讀與程式設計能力。建立基礎/進階/應用三階段課程，以培"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.9938, "text": "(114-2)\n為不同基礎者開設分級課程，打造視覺圖表、感測器程式構件教材，數位工具應用，培育大數據資料解讀與程式設計能力。建立基礎/進階/應用三階段課程，以培育學生具有數位運用與程式設計能力，打造兼具溝通與創造的新世代程式應用能力。從主題"}], "annual_targets": {"112": "為不同基礎者開設分級程式設計課程，打造視覺圖表、感測器程式構件教材，數位工具應用，培育大數據資料解讀與程式設計能力。建立基礎/進階/應用三階段課程，以培育學生具有數位運用與程式設計能力，打造兼具溝通與創造的新世代能力。從主題發想/實務呈現/程式開發競賽模式，透過成果展現獲得學習成就，營造團隊合作學習動能", "113": "為不同基礎者開設分級課程，打造視覺圖表、感測器程式構件教材，數位工具應用，培育大數據資料解讀與程式設計能力。建立基礎/進階/應用三階段課程，以培育學生具有數位運用與程式設計能力，打造兼具溝通與創造的新世代程式應用能力。從主題發想/實務呈現/程式開發競賽模式，透過成果展現獲得學習成就，營造團隊合作學習動能", "114": "為不同基礎者開設分級課程，打造視覺圖表、感測器程式構件教材，數位工具應用，培育大數據資料解讀與程式設計能力。建立基礎/進階/應用三階段課程，以培育學生具有數位運用與程式設計能力，打造兼具溝通與創造的新世代程式應用能力。從主題發想/實務呈現/程式開發競賽模式，透過成果展現獲得學習成就，營造團隊合作學習動能", "115": "為不同基礎者開設分級課程，打造視覺圖表、感測器程式構件教材，數位工具應用，培育大數據資料解讀與程式設計能力。建立基礎/進階/應用三階段課程，以培育學生具有數位運用與程式設計能力，打造兼具溝通與創造的新世代程式應用能力。從主題發想/實務呈現/程式開發競賽模式，透過成果展現獲得學習成就，營造團隊合作學習動能", "116": "為不同基礎者開設分級課程，打造視覺圖表、感測器程式構件教材，數位工具應用，培育大數據資料解讀與程式設計能力。建立基礎/進階/應用三階段課程，以培育學生具有數位運用與程式設計能力，打造兼具溝通與創造的新世代程式應用能力。從主題發想/實務呈現/程式開發競賽模式，透過成果展現獲得學習成就，營造團隊合作學習動能"}, "annual_actuals": {"111": "為不同基礎者開設分級程式設計課程，打造視覺圖表、感測器程式構件教材，數位工具應用，培育大數據資料解讀與程式設計能力。建立基礎/進階/應用三階段課程，以培育學生具有數位運用與程式設計能力，打造兼具溝通與創造的新世代能力。從主題發想/實務呈現/程式開發競賽模式，透過成果展現獲得學習成就，營造團隊合作學習動能", "112": "(112-2)\n為不同基礎者開設分級課程，打造視覺圖表、感測器程式構件教材，數位工具應用，培育大數據資料解讀與程式設計能力。建立基礎/進階/應用三階段課程，以培育學生具有數位運用與程式設計能力，打造兼具溝通與創造的新世代程式應用能力。從主題發想/實務呈現/程式開發競賽模式，透過成果展現獲得學習成就，營造團隊合作學習動能", "113": "(113-2)\n為不同基礎者開設分級課程，打造視覺圖表、感測器程式構件教材，數位工具應用，培育大數據資料解讀與程式設計能力。建立基礎/進階/應用三階段課程，以培育學生具有數位運用與程式設計能力，打造兼具溝通與創造的新世代程式應用能力。從主題發想/實務呈現/程式開發競賽模式，透過成果展現獲得學習成就，營造團隊合作學習動能", "114": "(114-2)\n為不同基礎者開設分級課程，打造視覺圖表、感測器程式構件教材，數位工具應用，培育大數據資料解讀與程式設計能力。建立基礎/進階/應用三階段課程，以培育學生具有數位運用與程式設計能力，打造兼具溝通與創造的新世代程式應用能力。從主題發想/實務呈現/程式開發競賽模式，透過成果展現獲得學習成就，營造團隊合作學習動能。"}, "annual_rates": {"112": null, "113": null, "114": null}, "latest_yr": "最新", "prev_yr": "次新"}, {"id": "COM-22", "category": "共同指標", "aspect": "教學創新精進", "aspect_code": "A1", "code": "1.0", "item": "學生中文閱讀寫作能力提升成效 - 學生通過學校設定校際共享中文能力教材測驗或第三方認證人數", "dept": "(原)共教中心", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "(114-2)\n619", "calc_rate": 1.0492, "qualitative_desc": "【未達標檢討】114-1中文檢測的前測乃是針對入學學生的中文先備能力做評估，從中了解入學新生的中文能力，通過人數的降低除了抽樣人數減少的因素之外，可看出學生基礎中文能力越來越低落的普遍現象，同時在未來一課程強化閱讀能力，以及提升書寫表達技巧，並且以檢測平台的輔導機制，幫助學生有效提升基礎能力，並於114-2的檢測後測中通過認證，提高通過率 ｜ ", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【AI 專案 Agent】", "ai_strategy": "啟動 【AI 專案 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 1.1259, "rate_delta": -0.0767, "trend_status": "STABLE", "history": [{"period": "115-1 填報期初", "calc_rate": 0.7432, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 0.7482, "text": "(114-2)\n619"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.7482, "text": "(114-2)\n619"}], "annual_targets": {"112": "330", "113": "540", "114": "590\n580", "115": "610\n590", "116": "610\n600"}, "annual_actuals": {"111": "342\n(*本校自辦)", "112": "(112-2)\n689", "113": "(113-2)\n608", "114": "(114-2)\n619"}, "annual_rates": {"112": 2.0879, "113": 1.1259, "114": 1.0492}, "latest_yr": "114", "prev_yr": "113"}, {"id": "COM-23", "category": "共同指標", "aspect": "教學創新精進", "aspect_code": "A1", "code": "2.0", "item": "學校設定校際共享中文能力教材測驗或第三方認證抽樣學生數", "dept": "(原)共教中心", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "(114-2)\n832\n達成率92.44%", "calc_rate": 0.9244, "qualitative_desc": "【未達標檢討】檢測人數為114學年度四技及五專入學新生統計總人數，因為入學新生人數減少，因此抽樣人數隨之減少 ｜ ", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【AI 專案 Agent】", "ai_strategy": "啟動 【AI 專案 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 1.0267, "rate_delta": -0.1023, "trend_status": "STABLE", "history": [{"period": "115-1 填報期初", "calc_rate": 0.8477, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 0.9277, "text": "(114-2)\n832\n達成率92.44%"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.9277, "text": "(114-2)\n832\n達成率92.44%"}], "annual_targets": {"112": "500", "113": "900", "114": "900", "115": "900", "116": "900"}, "annual_actuals": {"111": "544\n(*本校自辦)", "112": "(112-2)\n913", "113": "(113-2) \n924", "114": "(114-2)\n832\n達成率92.44%"}, "annual_rates": {"112": 1.826, "113": 1.0267, "114": 0.9244}, "latest_yr": "114", "prev_yr": "113"}, {"id": "COM-24", "category": "共同指標", "aspect": "教學創新精進", "aspect_code": "A1", "code": "3.0", "item": "協助學生中文閱讀寫作能力提升之推動策略描述", "dept": "(原)共教中心", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "(114-2)\n推動本校學生中文閱讀寫作能力，為達有效提升方法，不僅進行四技一課程改革，包括課名更動、教材更新，甚至將前測、後測認定為一份作業，前測佔10％；後測佔20％，強化學生對檢測的認同，更提升學習態度，檢測通過率達有效提升。", "calc_rate": 0.0333, "qualitative_desc": "對齊 115 年第 2 次填報最新彙整數據。", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【AI 專案 Agent】", "ai_strategy": "啟動 【AI 專案 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 0.3633, "rate_delta": -0.33, "trend_status": "STAGNANT", "history": [{"period": "115-1 填報期初", "calc_rate": 0.92, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 1.0, "text": "(114-2)\n推動本校學生中文閱讀寫作能力，為達有效提升方法，不僅進行四技一課程改革，包括課名更動、教材更新，甚至將前測、後測認定為一份作業，前測佔10％；後"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.0333, "text": "(114-2)\n推動本校學生中文閱讀寫作能力，為達有效提升方法，不僅進行四技一課程改革，包括課名更動、教材更新，甚至將前測、後測認定為一份作業，前測佔10％；後測佔20％，強化學生對檢測的認同，更提升學習態度，檢測通過率達有效提升。"}], "annual_targets": {"112": "(300字元)\n本校自109學年度起，推動中文主題課程，依科系屬性設計專業相關之主題課程，透過第一學期期初中文檢測前測進行診斷，修課期間引導學生閱讀理解與書寫練習，強化課外閱讀心得閱讀與文學獎寫作，培養學生擷取訊息、統整解釋的閱讀理解能力。並於第二學期實施後測，瞭解修課前後中文能力提升率，以滾動修正教學方法。程度初級者，建立閱讀理解，引導學習興趣；文學書寫分為三級，初級者引導三段式書寫法，完成300-800字短文；中階者引導深入敘寫，能完成800-1202字散文；高階者則鼓勵投文學獎項與課外讀書心得獎項，且持續鼓勵閱讀，進而完成專題簡報，上台口頭發表。", "113": "(300字元)\n本校自109學年度起，推動中文主題課程，依科系屬性設計專業相關之主題課程，透過第一學期期初中文檢測前測進行診斷，修課期間引導學生閱讀理解與書寫練習，強化課外閱讀心得閱讀與文學獎寫作，培養學生擷取訊息、統整解釋的閱讀理解能力。並於第二學期實施後測，瞭解修課前後中文能力提升率，以滾動修正教學方法。程度初級者，建立閱讀理解，引導學習興趣；文學書寫分為三級，初級者引導三段式書寫法，完成300-800字短文；中階者引導深入敘寫，能完成800-1204字散文；高階者則鼓勵投文學獎項與課外讀書心得獎項，且持續鼓勵閱讀，進而完成專題簡報，上台口頭發表。", "114": "(300字元)\n本校自109學年度起，推動中文主題課程，依科系屬性設計專業相關之主題課程，透過第一學期期初中文檢測前測進行診斷，修課期間引導學生閱讀理解與書寫練習，強化課外閱讀心得閱讀與文學獎寫作，培養學生擷取訊息、統整解釋的閱讀理解能力。並於第二學期實施後測，瞭解修課前後中文能力提升率，以滾動修正教學方法。程度初級者，建立閱讀理解，引導學習興趣；文學書寫分為三級，初級者引導三段式書寫法，完成300-800字短文；中階者引導深入敘寫，能完成800-1206字散文；高階者則鼓勵投文學獎項與課外讀書心得獎項，且持續鼓勵閱讀，進而完成專題簡報，上台口頭發表。", "115": "(300字元)\n本校自109學年度起，推動中文主題課程，依科系屬性設計專業相關之主題課程，透過第一學期期初中文檢測前測進行診斷，修課期間引導學生閱讀理解與書寫練習，強化課外閱讀心得閱讀與文學獎寫作，培養學生擷取訊息、統整解釋的閱讀理解能力。並於第二學期實施後測，瞭解修課前後中文能力提升率，以滾動修正教學方法。程度初級者，建立閱讀理解，引導學習興趣；文學書寫分為三級，初級者引導三段式書寫法，完成300-800字短文；中階者引導深入敘寫，能完成800-1208字散文；高階者則鼓勵投文學獎項與課外讀書心得獎項，且持續鼓勵閱讀，進而完成專題簡報，上台口頭發表。", "116": "(300字元)\n本校自109學年度起，推動中文主題課程，依科系屬性設計專業相關之主題課程，透過第一學期期初中文檢測前測進行診斷，修課期間引導學生閱讀理解與書寫練習，強化課外閱讀心得閱讀與文學獎寫作，培養學生擷取訊息、統整解釋的閱讀理解能力。並於第二學期實施後測，瞭解修課前後中文能力提升率，以滾動修正教學方法。程度初級者，建立閱讀理解，引導學習興趣；文學書寫分為三級，初級者引導三段式書寫法，完成300-800字短文；中階者引導深入敘寫，能完成800-1210字散文；高階者則鼓勵投文學獎項與課外讀書心得獎項，且持續鼓勵閱讀，進而完成專題簡報，上台口頭發表。"}, "annual_actuals": {"111": "(300字元)\n本校自109學年度起，推動中文課程主題興趣選修改革，透過第一學期期初中文檢測前測進行診斷，修課期間引導學生閱讀理解與書寫練習，增訂課外閱讀心得閱讀與文學獎寫作，培養學生擷取訊息、統整解釋的閱讀理解能力，第二學期後測，瞭解修課前後中文能力提升率，以滾動修正教學方法。程度初級者，建立閱讀理解，引導學習興趣；初級只能寫短文者，引導寫分三段式300-800字；中階者引導能完成800-1200字；高階者獎勵投文學獎項與課外讀書心得獎項，且持續鼓勵閱讀，甚至能完成專題簡報，上台口頭發表。", "112": "本校自109學年度起，推動中文課程主題興趣選修改革，透過第一學期期初中文檢測前測進行診斷，修課期間引導學生閱讀理解與書寫練習，增訂課外閱讀心得閱讀與文學獎寫作，培養學生擷取訊息、統整解釋的閱讀理解能力，第二學期後測，瞭解修課前後中文能力提升率，以滾動修正教學方法。程度初級者，建立閱讀理解，引導學習興趣；初級只能寫短文者，引導寫分三段式300-800字；中階者引導能完成800-1200字；高階者獎勵投文學獎項與課外讀書心得獎項，且持續鼓勵閱讀，甚至能完成專題簡報，上台口頭發表。", "113": "(113-2)\n本校自109學年度起，推動中文課程主題興趣選修改革，透過第一學期期初中文檢測前測進行診斷，修課期間引導學生閱讀理解與書寫練習，增訂課外閱讀心得閱讀與文學獎寫作，培養學生擷取訊息、統整解釋的閱讀理解能力，第二學期後測，瞭解修課前後中文能力提升率，以滾動修正教學方法。程度初級者，建立閱讀理解，引導學習興趣；初級只能寫短文者，引導寫分三段式300-800字；中階者引導能完成800-1200字；高階者獎勵投文學獎項與課外讀書心得獎項，且持續鼓勵閱讀，甚至能完成專題簡報，上台口頭發表。", "114": "(114-2)\n推動本校學生中文閱讀寫作能力，為達有效提升方法，不僅進行四技一課程改革，包括課名更動、教材更新，甚至將前測、後測認定為一份作業，前測佔10％；後測佔20％，強化學生對檢測的認同，更提升學習態度，檢測通過率達有效提升。"}, "annual_rates": {"112": 0.3633, "113": 0.3633, "114": 0.0333}, "latest_yr": "114", "prev_yr": "113"}, {"id": "COM-25", "category": "共同指標", "aspect": "教學創新精進", "aspect_code": "A1", "code": "1.0", "item": "學生英語能力提升成效 - 辦理專業英語課程(ESP、EAP)數", "dept": "教務處", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "每年匯入1次，本次不匯入", "calc_rate": 1.0, "qualitative_desc": "【未達標檢討】無 ｜ ", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【外語拔尖 Agent】", "ai_strategy": "啟動 【外語拔尖 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 1.1, "rate_delta": -0.1, "trend_status": "STABLE", "history": [{"period": "115-1 填報期初", "calc_rate": 0.92, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 1.0, "text": "每年匯入1次，本次不匯入"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.892, "text": "每年匯入1次，本次不匯入"}], "annual_targets": {"112": "(112學年度)\n24", "113": "(113學年度)\n20", "114": "(114學年度)\n20", "115": "(115學年度)\n20", "116": "(116學年度)\n20"}, "annual_actuals": {"111": "19", "112": "19", "113": "22", "114": "每年匯入1次，本次不匯入"}, "annual_rates": {"112": 0.7917, "113": 1.1, "114": 1.0}, "latest_yr": "114", "prev_yr": "113"}, {"id": "COM-26", "category": "共同指標", "aspect": "教學創新精進", "aspect_code": "A1", "code": "2.0", "item": "學生達各級CEFR能力情形-英文證照通過張數-A1", "dept": "(原)共教中心", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "(114-1)\n280(教育部提供)", "calc_rate": 1.1864, "qualitative_desc": "【未達標檢討】無 ｜ ", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【證照輔導 Agent】", "ai_strategy": "啟動 【證照輔導 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 0.9234, "rate_delta": 0.263, "trend_status": "PROGRESS_MET", "history": [{"period": "115-1 填報期初", "calc_rate": 0.887, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 0.892, "text": "(114-1)\n280(教育部提供)"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.892, "text": "(114-1)\n280(教育部提供)"}], "annual_targets": {"112": "235", "113": "235", "114": "236", "115": "237", "116": "238"}, "annual_actuals": {"111": "141\n(校基庫填報146)", "112": "(112-1)\n195(教育部提供)", "113": "(113-1)\n217(教育部提供)", "114": "(114-1)\n280(教育部提供)"}, "annual_rates": {"112": 0.8298, "113": 0.9234, "114": 1.1864}, "latest_yr": "114", "prev_yr": "113"}, {"id": "COM-27", "category": "共同指標", "aspect": "教學創新精進", "aspect_code": "A1", "code": "3.0", "item": "學生達各級CEFR能力情形-英文證照通過張數-A2", "dept": "教務處", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "(114-1)\n320(教育部提供)", "calc_rate": 1.592, "qualitative_desc": "對齊 115 年第 2 次填報最新彙整數據。", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【證照輔導 Agent】", "ai_strategy": "啟動 【證照輔導 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 1.6, "rate_delta": -0.008, "trend_status": "STABLE", "history": [{"period": "115-1 填報期初", "calc_rate": 0.92, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 1.0, "text": "(114-1)\n320(教育部提供)"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 1.592, "text": "(114-1)\n320(教育部提供)"}], "annual_targets": {"112": "200", "113": "200", "114": "201\n250", "115": "202\n290", "116": "203\n300"}, "annual_actuals": {"111": "158\n(校基庫填報177)", "112": "(112-1)\n202(教育部提供)", "113": "(113-1)\n320(教育部提供)", "114": "(114-1)\n320(教育部提供)"}, "annual_rates": {"112": 1.01, "113": 1.6, "114": 1.592}, "latest_yr": "114", "prev_yr": "113"}, {"id": "COM-28", "category": "共同指標", "aspect": "教學創新精進", "aspect_code": "A1", "code": "4.0", "item": "學生達各級CEFR能力情形-英文證照通過張數-B1", "dept": "教務處", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "(114-1)\n46(教育部提供)", "calc_rate": 4.6, "qualitative_desc": "【未達標檢討】無 ｜ ", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【證照輔導 Agent】", "ai_strategy": "啟動 【證照輔導 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 3.25, "rate_delta": 1.35, "trend_status": "PROGRESS_MET", "history": [{"period": "115-1 填報期初", "calc_rate": 0.8533, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 0.9333, "text": "(114-1)\n46(教育部提供)"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.9333, "text": "(114-1)\n46(教育部提供)"}], "annual_targets": {"112": "8", "113": "8", "114": "10\n15", "115": "11\n20", "116": "12\n25"}, "annual_actuals": {"111": "12\n(校基庫填報16)", "112": "(112-1)\n9(教育部提供)", "113": "(113-1)\n26(教育部提供)", "114": "(114-1)\n46(教育部提供)"}, "annual_rates": {"112": 1.125, "113": 3.25, "114": 4.6}, "latest_yr": "114", "prev_yr": "113"}, {"id": "COM-29", "category": "共同指標", "aspect": "教學創新精進", "aspect_code": "A1", "code": "5.0", "item": "學生達各級CEFR能力情形-英文證照通過張數-B2", "dept": "教務處", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "(114-1)\n1(教育部提供)\n達成率33.33%", "calc_rate": 0.3333, "qualitative_desc": "【未達標檢討】本校學生結構對應B2和C1以上屬高階英文 (考一次即達畢業門檻) ，將持續推動免費英檢考照，提高B1.B2學生報考誘因。113學年度起每班將開設各班優秀B1以上學生拔尖輔導證照輔導課程，以及全班境外生班級，並藉全額報名費補助激勵潛力學生報考高階英檢證照，如搭配高額獎勵金效果可加乘。 ｜ 本校學生結構對應B2和C1以上屬高階英文 (考一次即達畢業門檻) ，將持續推動英檢考照輔導班，除提供獎勵補助外，115學年新增進步獎勵方案，提高B1.B2學生報考誘因。", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【證照輔導 Agent】", "ai_strategy": "啟動 【證照輔導 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 1.0, "rate_delta": -0.6667, "trend_status": "STAGNANT", "history": [{"period": "115-1 填報期初", "calc_rate": 0.3133, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 0.3333, "text": "(114-1)\n1(教育部提供)\n達成率33.33%"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.3333, "text": "(114-1)\n1(教育部提供)\n達成率33.33%"}], "annual_targets": {"112": "3", "113": "3", "114": "5\n3", "115": "5\n3", "116": "5\n3"}, "annual_actuals": {"111": "1\n(校基庫填報2)", "112": "(112-1)\n4(教育部提供)", "113": "(113-1)\n1(教育部提供)", "114": "(114-1)\n1(教育部提供)\n達成率33.33%"}, "annual_rates": {"112": 1.3333, "113": 1.0, "114": 0.3333}, "latest_yr": "114", "prev_yr": "113"}, {"id": "COM-30", "category": "共同指標", "aspect": "教學創新精進", "aspect_code": "A1", "code": "6.0", "item": "學生達各級CEFR能力情形-英文證照通過張數-C1", "dept": "教務處", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "(114-1)\n0(教育部提供)\n達成0%", "calc_rate": 0.0, "qualitative_desc": "【未達標檢討】本校學生結構對應B2和C1以上屬高階英文 (考一次即達畢業門檻) ，將持續推動免費英檢考照，提高B1.B2學生報考誘因。113學年度起每班將開設各班優秀B1以上學生拔尖輔導證照輔導課程，以及全班境外生班級，並藉全額報名費補助激勵潛力學生報考高階英檢證照，如搭配高額獎勵金效果可加乘。 ｜ 本校學生結構對應B2和C1以上屬高階英文 (考一次即達畢業門檻) ，將持續推動英檢考照輔導班，除提供獎勵補助外，115學年新增進步獎勵方案，提高B1.B2學生報考誘因。", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【證照輔導 Agent】", "ai_strategy": "啟動 【證照輔導 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 0.0, "rate_delta": 0.0, "trend_status": "STAGNANT", "history": [{"period": "115-1 填報期初", "calc_rate": 0.0, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 0.0, "text": "(114-1)\n0(教育部提供)\n達成0%"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.0, "text": "(114-1)\n0(教育部提供)\n達成0%"}], "annual_targets": {"112": "1", "113": "1", "114": "1", "115": "1", "116": "1"}, "annual_actuals": {"111": "1\n(校基庫填報1)", "112": "(112-1)\n1(教育部提供)", "113": "(113-1)\n0(教育部提供)", "114": "(114-1)\n0(教育部提供)\n達成0%"}, "annual_rates": {"112": 1.0, "113": 0.0, "114": 0.0}, "latest_yr": "114", "prev_yr": "113"}, {"id": "COM-31", "category": "共同指標", "aspect": "教學創新精進", "aspect_code": "A1", "code": "7.0", "item": "學生達各級CEFR能力情形-英文證照通過張數-C2", "dept": "教務處", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "(114-1)\n0(教育部提供)\n達成0%", "calc_rate": 0.0, "qualitative_desc": "【未達標檢討】TOEIC已取消C2等級，目前本校學生多參加本項檢測，未來持續鼓勵菁英學生，改考其他有C2等級的英檢考試。 ｜ 本校英檢考以TOEIC為主,現已取消C2等級，加上科大學生普遍難以取得C2，故本項指標無法達成，建議取消本項指標。\n(建議刪除此句)", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【證照輔導 Agent】", "ai_strategy": "啟動 【證照輔導 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 0.0, "rate_delta": 0.0, "trend_status": "STAGNANT", "history": [{"period": "115-1 填報期初", "calc_rate": 0.0, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 0.0, "text": "(114-1)\n0(教育部提供)\n達成0%"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.0, "text": "(114-1)\n0(教育部提供)\n達成0%"}], "annual_targets": {"112": "1", "113": "1", "114": "1", "115": "1", "116": "1"}, "annual_actuals": {"111": "0\n(校基庫填報0)", "112": "(112-1)\n0(教育部提供)", "113": "(113-1)\n0(教育部提供)", "114": "(114-1)\n0(教育部提供)\n達成0%"}, "annual_rates": {"112": 0.0, "113": 0.0, "114": 0.0}, "latest_yr": "114", "prev_yr": "113"}, {"id": "COM-32", "category": "共同指標", "aspect": "教學創新精進", "aspect_code": "A1", "code": "8.0", "item": "學生非英文證照通過張數", "dept": "教務處", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "(114-1)\n1(教育部提供)\n達成率33.33%", "calc_rate": 0.3333, "qualitative_desc": "【未達標檢討】第二外語日韓語一年舉辦2次,施測後約半年才能取得證照,故數據未完全出來。 ｜ 112-1曾開設進階第二日語，並鼓勵學生考取非英語證照，因第二外語未列入畢業門檻，且上課學生普遍將第二外語視為出國可溝通工具，並無意願參加檢定考，建議本項指標改為課程通過率，作為學習評量指標。", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【證照輔導 Agent】", "ai_strategy": "啟動 【證照輔導 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 2.0, "rate_delta": -1.6667, "trend_status": "STAGNANT", "history": [{"period": "115-1 填報期初", "calc_rate": 0.3133, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 0.3333, "text": "(114-1)\n1(教育部提供)\n達成率33.33%"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.3333, "text": "(114-1)\n1(教育部提供)\n達成率33.33%"}], "annual_targets": {"112": "2", "113": "3", "114": "3", "115": "4", "116": "4\n5"}, "annual_actuals": {"111": "4\n(校基庫填報4)", "112": "(112-1)\n6(教育部提供)", "113": "(113-1)\n6(教育部提供)", "114": "(114-1)\n1(教育部提供)\n達成率33.33%"}, "annual_rates": {"112": 3.0, "113": 2.0, "114": 0.3333}, "latest_yr": "114", "prev_yr": "113"}, {"id": "COM-33", "category": "共同指標", "aspect": "教學創新精進", "aspect_code": "A1", "code": "9.0", "item": "協助學生提升英語能力及修讀專業英語 課程ESP或EAP課程之具體推動策略描述", "dept": "教務處", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "(114-1)\n1.建置職場英語沉浸教學，以職場社交用語/英語書信應用/英語簡報等，辦理學習活動與競賽，打造自然無壓力的語感教學模式。\n2.編纂專業英語教材與學習手冊，協助專業學術英語課程(EAP)開設。", "calc_rate": 1.0, "qualitative_desc": "對齊 115 年第 2 次填報最新彙整數據。", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【外語拔尖 Agent】", "ai_strategy": "啟動 【外語拔尖 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 1.0, "rate_delta": 0.0, "trend_status": "STABLE", "history": [{"period": "115-1 填報期初", "calc_rate": 0.92, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 1.0, "text": "(114-1)\n1.建置職場英語沉浸教學，以職場社交用語/英語書信應用/英語簡報等，辦理學習活動與競賽，打造自然無壓力的語感教學模式。\n2.編纂專業英語教材與學"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 1.0, "text": "(114-1)\n1.建置職場英語沉浸教學，以職場社交用語/英語書信應用/英語簡報等，辦理學習活動與競賽，打造自然無壓力的語感教學模式。\n2.編纂專業英語教材與學習手冊，協助專業學術英語課程(EAP)開設。"}], "annual_targets": {"112": "1.建置職場英語沉浸教學，以職場社交用語/英語書信應用/英語簡報等，辦理學習活動與競賽，打造自然無壓力的語感教學模式。\n2.編纂專業英語教材與學習手冊，協助專業學術英語課程(EAP)開設", "113": "1.建置職場英語沉浸教學，以職場社交用語/英語書信應用/英語簡報等，辦理學習活動與競賽，打造自然無壓力的語感教學模式。\n2.編纂專業英語教材與學習手冊，協助專業學術英語課程(EAP)開設", "114": "1.建置職場英語沉浸教學，以職場社交用語/英語書信應用/英語簡報等，辦理學習活動與競賽，打造自然無壓力的語感教學模式。\n2.編纂專業英語教材與學習手冊，協助專業學術英語課程(EAP)開設", "115": "1.建置職場英語沉浸教學，以職場社交用語/英語書信應用/英語簡報等，辦理學習活動與競賽，打造自然無壓力的語感教學模式。\n2.編纂專業英語教材與學習手冊，協助專業學術英語課程(EAP)開設", "116": "1.建置職場英語沉浸教學，以職場社交用語/英語書信應用/英語簡報等，辦理學習活動與競賽，打造自然無壓力的語感教學模式。\n2.編纂專業英語教材與學習手冊，協助專業學術英語課程(EAP)開設"}, "annual_actuals": {"111": "1.建置職場英語沉浸教學，以職場社交用語/英語書信應用/英語簡報等，辦理學習活動與競賽，打造自然無壓力的語感教學模式。\n2.編纂專業英語教材與學習手冊，協助專業學術英語課程(EAP)開設。", "112": "(112-1)\n1.建置職場英語沉浸教學，以職場社交用語/英語書信應用/英語簡報等，辦理學習活動與競賽，打造自然無壓力的語感教學模式。\n2.編纂專業英語教材與學習手冊，協助專業學術英語課程(EAP)開設", "113": "(113-1)\n1.建置職場英語沉浸教學，以職場社交用語/英語書信應用/英語簡報等，辦理學習活動與競賽，打造自然無壓力的語感教學模式。\n2.編纂專業英語教材與學習手冊，協助專業學術英語課程(EAP)開設。", "114": "(114-1)\n1.建置職場英語沉浸教學，以職場社交用語/英語書信應用/英語簡報等，辦理學習活動與競賽，打造自然無壓力的語感教學模式。\n2.編纂專業英語教材與學習手冊，協助專業學術英語課程(EAP)開設。"}, "annual_rates": {"112": 1.0, "113": 1.0, "114": 1.0}, "latest_yr": "114", "prev_yr": "113"}, {"id": "COM-34", "category": "共同指標", "aspect": "教學創新精進", "aspect_code": "A1", "code": "1.0", "item": "優化師資質量及改善生師比推動成效 - 生師比", "dept": "人事室", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "(114-2)\n20.47(教育部提供)", "calc_rate": 0.89, "qualitative_desc": "【未達標檢討】無 ｜ ", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【AI 專案 Agent】", "ai_strategy": "啟動 【AI 專案 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 0.9409, "rate_delta": -0.0509, "trend_status": "STABLE", "history": [{"period": "115-1 填報期初", "calc_rate": 0.92, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 1.0, "text": "(114-2)\n20.47(教育部提供)"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.892, "text": "(114-2)\n20.47(教育部提供)"}], "annual_targets": {"112": "23", "113": "23", "114": "23", "115": "23", "116": "23"}, "annual_actuals": {"111": "22.64", "112": "(112-2)\n21.87", "113": "(113-2)\n21.64(教育部提供)", "114": "(114-2)\n20.47(教育部提供)"}, "annual_rates": {"112": 0.9509, "113": 0.9409, "114": 0.89}, "latest_yr": "114", "prev_yr": "113"}, {"id": "COM-35", "category": "共同指標", "aspect": "善盡社會責任 (USR)", "aspect_code": "A4", "code": "1.0", "item": "大學實踐社會責任推動成效 - 與中長期校務發展連結之作法與具體成果", "dept": "(原)校研室", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "(114-2)\n整合外部來源及附設機構之校務研究資料，主動取得外部關係人之意見回饋，以建立更完整之校務經營資料倉儲系統，並逐步更新相關IR資料庫之資料字典。", "calc_rate": 0.892, "qualitative_desc": "【未達標檢討】無 ｜ ", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【AI 專案 Agent】", "ai_strategy": "啟動 【AI 專案 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 1.0, "rate_delta": -0.108, "trend_status": "STABLE", "history": [{"period": "115-1 填報期初", "calc_rate": 0.92, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 1.0, "text": "(114-2)\n整合外部來源及附設機構之校務研究資料，主動取得外部關係人之意見回饋，以建立更完整之校務經營資料倉儲系統，並逐步更新相關IR資料庫之資料字典。"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.892, "text": "(114-2)\n整合外部來源及附設機構之校務研究資料，主動取得外部關係人之意見回饋，以建立更完整之校務經營資料倉儲系統，並逐步更新相關IR資料庫之資料字典。"}], "annual_targets": {"112": "(300字元)\n建置以教師為中心之教師發展資料倉儲系統，並將持續維護資料字典版本與內容。並據之持續發展可協助校務發展之對應的分析議題。且以資料主動性趨動教師能穩定向上發展與專業形象呈現與推撥。並公開研究成果。", "113": "(300字元)\n盤點外部資料及可能之相關利害關係人，並建立其本校之資料來源地圖、並以關聯式資料的逐步建立相關資料字典。", "114": "(300字元)\n規劃全校範疇之教務及學務資料的雲端視覺化互動查詢平台提供充份即時資訊。並規劃以機器學習等演算法建立以資料趨動為基礎之教學成效預測評估機制，並建立校內IR議題之提案機制以量化實踐校務研究成果。", "115": "(300字元)\n整合外部來源及附設機構之校務研究資料，主動取得外部關係人之意見回饋，以建立更完整之校務經營資料倉儲系統，並逐步更新相關IR資料庫之資料字典。", "116": "(300字元)\n延伸本校之現有校務系統成為多維度校務研究資料倉儲系統，以評估如何改善辦學成效、永續營之最適模式，並與國際校務研究成果接軌及公開研究成果。"}, "annual_actuals": {"111": "(300字元)\n建置以學生為中心之教務資料之資料倉儲系統，並將持續維護資料字典版本與內容。並據之持續發展可協助校務發展之對應的分析議題。且以資料主動性趨動生源穩定與招生口碑推薦策略，並公開研究成果。", "112": "(112-2)\n建置以學生為中心之教務資料之資料倉儲系統，並將持續維護資料字典版本與內容。並據之持續發展可協助校務發展之對應的分析議題。且以資料主動性趨動生源穩定與招生口碑推薦策略，並公開研究成果。", "113": "(113-2)\n盤點外部資料及可能之相關利害關係人，並建立其本校之資料來源地圖、並以關聯式資料的逐步建立相關資料字典。。", "114": "(114-2)\n整合外部來源及附設機構之校務研究資料，主動取得外部關係人之意見回饋，以建立更完整之校務經營資料倉儲系統，並逐步更新相關IR資料庫之資料字典。"}, "annual_rates": {"112": null, "113": null, "114": null}, "latest_yr": "最新", "prev_yr": "次新"}, {"id": "COM-36", "category": "共同指標", "aspect": "善盡社會責任 (USR)", "aspect_code": "A4", "code": "2.0", "item": "結合學校教研能量及社會資源，促進在地永續發展之作法及成效", "dept": "(原)校研室", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "(114-2)\n以跨領域為本，透過資料分析基礎回饋之課程改革，提出能與本校之校內外利害關係人合作，及共同參與之社會實踐方案。", "calc_rate": 0.3333, "qualitative_desc": "【未達標檢討】本校學生結構對應B2和C1以上屬高階英文 (考一次即達畢業門檻) ，將持續推動免費英檢考照，提高B1.B2學生報考誘因。113學年度起每班將開設各班優秀B1以上學生拔尖輔導證照輔導課程，以及全班境外生班級，並藉全額報名費補助激勵潛力學生報考高階英檢證照，如搭配高額獎勵金效果可加乘。 ｜ ", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【AI 專案 Agent】", "ai_strategy": "啟動 【AI 專案 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 1.0, "rate_delta": -0.6667, "trend_status": "STAGNANT", "history": [{"period": "115-1 填報期初", "calc_rate": 0.92, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 1.0, "text": "(114-2)\n以跨領域為本，透過資料分析基礎回饋之課程改革，提出能與本校之校內外利害關係人合作，及共同參與之社會實踐方案。"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.3333, "text": "(114-2)\n以跨領域為本，透過資料分析基礎回饋之課程改革，提出能與本校之校內外利害關係人合作，及共同參與之社會實踐方案。"}], "annual_targets": {"112": "(300字元)\n逐步提昇本校教學研究盤能量與成果，申請各項學術研究補助亮點計畫，集中資源強化在地深耕實踐價值。", "113": "(300字元)\n以科技為媒介，與本地之社會團體建立連結，在地化數位實踐，形成在地場域與課程串聯循環，為地方之特色產業及數位轉型提供創新應用方案。", "114": "(300字元)\n以科技為基礎、包容性為輔助策略，培育具韌性與實踐力的合作模式，來協助拉拔區域之產學實踐力，達到產學間的資源共創。", "115": "（300字元）\n以跨領域為本，透過資料分析基礎回饋之課程改革，提出能與本校之校內外利害關係人合作，及共同參與之社會實踐方案。", "116": "(300字元)\n持續發展適應在地性之各項專業課程，將活化能量以跨領域之實際研究為基礎之課程。"}, "annual_actuals": {"111": "(300字元)\n以USR做為比鄰共好的永續培力行動基地，逐步推出各種行動方案與策略聯盟行動，以推動本校與在地之永續培力能量。", "112": "(112-2)\n以USR做為比鄰共好的永續培力行動基地，逐步推出各種行動方案與策略聯盟行動，以推動本校與在地之永續培力能量。", "113": "(113-2)\n以科技為媒介，與本地之社會團體建立連結，在地化數位實踐，形成在地場域與課程串聯循環，為地方之特色產業及數位轉型提供創新應用方案。", "114": "(114-2)\n以跨領域為本，透過資料分析基礎回饋之課程改革，提出能與本校之校內外利害關係人合作，及共同參與之社會實踐方案。"}, "annual_rates": {"112": null, "113": null, "114": null}, "latest_yr": "最新", "prev_yr": "次新"}, {"id": "COM-37", "category": "共同指標", "aspect": "產學合作連結", "aspect_code": "A2", "code": "1.0", "item": "學生創新創業課程推動成效 - 開設創新創業課程教師數(學期/人)", "dept": "教務處課註組", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "(114-2)\n81(教育部提供)\n達成率73.63%", "calc_rate": 0.7363, "qualitative_desc": "【未達標檢討】無 ｜ ", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【三創育成 Agent】", "ai_strategy": "啟動 【三創育成 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 0.8725, "rate_delta": -0.1362, "trend_status": "STAGNANT", "history": [{"period": "115-1 填報期初", "calc_rate": 0.88, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 0.885, "text": "(114-2)\n81(教育部提供)\n達成率73.63%"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.892, "text": "(114-2)\n81(教育部提供)\n達成率73.63%"}], "annual_targets": {"112": "28", "113": "102", "114": "105", "115": "110", "116": "115"}, "annual_actuals": {"111": "39(教育部提供)", "112": "(112-2)\n102(教育部提供)", "113": "(113-2)\n89(教育部提供)", "114": "(114-2)\n81(教育部提供)\n達成率73.63%"}, "annual_rates": {"112": 3.6429, "113": 0.8725, "114": 0.7363}, "latest_yr": "114", "prev_yr": "113"}, {"id": "COM-38", "category": "共同指標", "aspect": "產學合作連結", "aspect_code": "A2", "code": "2.0", "item": "修讀創新創業課程學生人次", "dept": "教務處課註組", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "(114-2)\n1232(教育部提供)\n達成率55.24%", "calc_rate": 0.5524, "qualitative_desc": "【未達標檢討】本校學生結構對應B2和C1以上屬高階英文 (考一次即達畢業門檻) ，將持續推動免費英檢考照，提高B1.B2學生報考誘因。113學年度起每班將開設各班優秀B1以上學生拔尖輔導證照輔導課程，以及全班境外生班級，並藉全額報名費補助激勵潛力學生報考高階英檢證照，如搭配高額獎勵金效果可加乘。 ｜ 因少子化影響，致使修讀人次下滑，建議修正目標值。", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【三創育成 Agent】", "ai_strategy": "啟動 【三創育成 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 0.7309, "rate_delta": -0.1785, "trend_status": "STAGNANT", "history": [{"period": "115-1 填報期初", "calc_rate": 0.813, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 0.818, "text": "(114-2)\n1232(教育部提供)\n達成率55.24%"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.3333, "text": "(114-2)\n1232(教育部提供)\n達成率55.24%"}], "annual_targets": {"112": "1366", "113": "2211", "114": "2220", "115": "2230", "116": "2240"}, "annual_actuals": {"111": "1,911(教育部提供)", "112": "(112-2)\n2211(教育部提供)", "113": "(113-2)\n1616(教育部提供)", "114": "(114-2)\n1232(教育部提供)\n達成率55.24%"}, "annual_rates": {"112": 1.6186, "113": 0.7309, "114": 0.5524}, "latest_yr": "114", "prev_yr": "113"}, {"id": "COM-39", "category": "共同指標", "aspect": "產學合作連結", "aspect_code": "A2", "code": "4.0", "item": "協助學生創新創業之具體推動策略描述 （含輔導校內創新創業團隊概況）", "dept": "研發處", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "(114-2)\n辦理校友創業、智慧財產權講座，提升師生專利申請數，辦理校園創業競賽，協助學院辦理三創競賽。", "calc_rate": 0.85, "qualitative_desc": "對齊 115 年第 2 次填報最新彙整數據。", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【三創育成 Agent】", "ai_strategy": "啟動 【三創育成 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 1.0, "rate_delta": -0.15, "trend_status": "STABLE", "history": [{"period": "115-1 填報期初", "calc_rate": 0.92, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 1.0, "text": "(114-2)\n辦理校友創業、智慧財產權講座，提升師生專利申請數，辦理校園創業競賽，協助學院辦理三創競賽。"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.85, "text": "(114-2)\n辦理校友創業、智慧財產權講座，提升師生專利申請數，辦理校園創業競賽，協助學院辦理三創競賽。"}], "annual_targets": {"112": "辦理校友創業、智慧財產權講座，提升師生專利申請數，辦理校園創業競賽，協助學院辦理三創競賽。", "113": "辦理校友創業、智慧財產權講座，提升師生專利申請數，辦理校園創業競賽，協助學院辦理三創競賽。", "114": "辦理校友創業、智慧財產權講座，提升師生專利申請數，辦理校園創業競賽，協助學院辦理三創競賽。", "115": "辦理校友創業、智慧財產權講座，提升師生專利申請數，辦理校園創業競賽，協助學院辦理三創競賽。", "116": "辦理校友創業、智慧財產權講座，提升師生專利申請數，辦理校園創業競賽，協助學院辦理三創競賽。"}, "annual_actuals": {"111": "U-START創業團隊獲選第二階段績優團隊，並鼓勵該團隊參加國科會FITI創新創業績勵計畫；完成110-2校園創業競賽優勝團隊進駐培育室，辦理創意行銷影片競賽並鼓勵上傳至網路平台；持續辦理校友創業講座，分享幼兒園經營及如何以二代進行轉型之經驗，分析幼兒產業事業未來之展望；研擬111-2專利申請工作坊與專利商品化講座；111年企業團隊進駐培育數家數為7家。", "112": "(112-2)\n辦理2023年全國校園行銷創意影片競賽，全國大專校院及高中職共35組團隊113人參加，本中心訂於112年11月20日辦理頒獎典禮，大專校院及高中職組共14組獲獎；辦理「由研發社群至實體製作到專題競賽及實證應用」研習會，瞭解由研發社群創意發想產出專利至研發產品實體製作的過程；112年企業團隊進駐培育數家數為9家。", "113": "(113-2)\n辦理2024年全國校園行銷創意影片競賽，全國大專校院及高中職參加學生數共151人；113年共辦理2場講座，分別為校友創業講座及學生競賽獲獎經驗分享講座；113年企業團隊進駐培育數家數為9家。", "114": "(114-2)\n辦理校友創業、智慧財產權講座，提升師生專利申請數，辦理校園創業競賽，協助學院辦理三創競賽。"}, "annual_rates": {"112": null, "113": null, "114": null}, "latest_yr": "最新", "prev_yr": "次新"}, {"id": "COM-40", "category": "共同指標", "aspect": "提升高教公共性", "aspect_code": "A3", "code": "1.0", "item": "經濟或文化不利學生獲得輔導或協助之提升成效 - 經濟或文化不利學生獲得輔導或協助之提升成效", "dept": "學務處 處本部", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "(114-2)  \n從六方向(學習面、技能面、生活面、經濟面、學用面、就業面)輔導扶助，針對經濟、學習、族群等各種弱勢學生，適切提供關懷輔導，特訂定本校「激勵學習安心就學作業要點」，提供八大類學生得以獲得完整的輔導機制，落實以學習取代工讀，", "calc_rate": 0.892, "qualitative_desc": "【未達標檢討】無 ｜ ", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【AI 專案 Agent】", "ai_strategy": "啟動 【AI 專案 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 1.0, "rate_delta": -0.108, "trend_status": "STABLE", "history": [{"period": "115-1 填報期初", "calc_rate": 0.92, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 1.0, "text": "(114-2)  \n從六方向(學習面、技能面、生活面、經濟面、學用面、就業面)輔導扶助，針對經濟、學習、族群等各種弱勢學生，適切提供關懷輔導，特訂定本校「激勵學"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.892, "text": "(114-2)  \n從六方向(學習面、技能面、生活面、經濟面、學用面、就業面)輔導扶助，針對經濟、學習、族群等各種弱勢學生，適切提供關懷輔導，特訂定本校「激勵學習安心就學作業要點」，提供八大類學生得以獲得完整的輔導機制，落實以學習取代工讀，"}], "annual_targets": {"112": "從六方向(學習面、技能面、生活面、經濟面、學用面、就業面)輔導扶助，針對經濟、學習、族群等各種弱勢學生，適切提供關懷輔導，特訂定本校「激勵學習安心就學作業要點」，提供八大類學生得以獲得完整的輔導機制，落實以學習取代工讀，提升本職學能與學習成效。", "113": "從六方向(學習面、技能面、生活面、經濟面、學用面、就業面)輔導扶助，針對經濟、學習、族群等各種弱勢學生，適切提供關懷輔導，特訂定本校「激勵學習安心就學作業要點」，提供八大類學生得以獲得完整的輔導機制，落實以學習取代工讀，提升本職學能與學習成效。", "114": "從六方向(學習面、技能面、生活面、經濟面、學用面、就業面)輔導扶助，針對經濟、學習、族群等各種弱勢學生，適切提供關懷輔導，特訂定本校「激勵學習安心就學作業要點」，提供八大類學生得以獲得完整的輔導機制，落實以學習取代工讀，提升本職學能與學習成效。", "115": "從六方向(學習面、技能面、生活面、經濟面、學用面、就業面)輔導扶助，針對經濟、學習、族群等各種弱勢學生，適切提供關懷輔導，特訂定本校「激勵學習安心就學作業要點」，提供八大類學生得以獲得完整的輔導機制，落實以學習取代工讀，提升本職學能與學習成效。", "116": "從六方向(學習面、技能面、生活面、經濟面、學用面、就業面)輔導扶助，針對經濟、學習、族群等各種弱勢學生，適切提供關懷輔導，特訂定本校「激勵學習安心就學作業要點」，提供八大類學生得以獲得完整的輔導機制，落實以學習取代工讀，提升本職學能與學習成效。"}, "annual_actuals": {"111": "從六方向(學習面、技能面、生活面、經濟面、學用面、就業面)輔導扶助，針對經濟、學習、族群等各種弱勢學生，適切提供關懷輔導，特訂定本校「激勵學習安心就學作業要點」，提供八大類學生得以獲得完整的輔導機制，落實以學習取代工讀，提升本職學能與學習成效。", "112": "(112-2)\n從六方向(學習面、技能面、生活面、經濟面、學用面、就業面)輔導扶助，針對經濟、學習、族群等各種弱勢學生，適切提供關懷輔導，特訂定本校「激勵學習安心就學作業要點」，提供八大類學生得以獲得完整的輔導機制，落實以學習取代工讀，提升本職學能與學習成效。", "113": "(113-2)\n從六方向(學習面、技能面、生活面、經濟面、學用面、就業面)輔導扶助，針對經濟、學習、族群等各種弱勢學生，適切提供關懷輔導，特訂定本校「激勵學習安心就學作業要點」，提供八大類學生得以獲得完整的輔導機制，落實以學習取代工讀，提升本職學能與學習成效。", "114": "(114-2)  \n從六方向(學習面、技能面、生活面、經濟面、學用面、就業面)輔導扶助，針對經濟、學習、族群等各種弱勢學生，適切提供關懷輔導，特訂定本校「激勵學習安心就學作業要點」，提供八大類學生得以獲得完整的輔導機制，落實以學習取代工讀，提升本職學能與學習成效。"}, "annual_rates": {"112": null, "113": null, "114": null}, "latest_yr": "最新", "prev_yr": "次新"}, {"id": "COM-41", "category": "共同指標", "aspect": "提升高教公共性", "aspect_code": "A3", "code": "1.0", "item": "輔導原民生及推動全民原教成效 - 辦理全民原教相關活動場次", "dept": "學務處 原資中心", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "(114-2)  \n33", "calc_rate": 3.0, "qualitative_desc": "【未達標檢討】無 ｜ ", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【AI 專案 Agent】", "ai_strategy": "啟動 【AI 專案 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 1.2727, "rate_delta": 1.7273, "trend_status": "PROGRESS_MET", "history": [{"period": "115-1 填報期初", "calc_rate": 0.92, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 1.0, "text": "(114-2)  \n33"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.892, "text": "(114-2)  \n33"}], "annual_targets": {"112": "10場次", "113": "11場次", "114": "11場次", "115": "12場次", "116": "12場次"}, "annual_actuals": {"111": "10場次", "112": "(112-2)\n31", "113": "(113-2)\n14", "114": "(114-2)  \n33"}, "annual_rates": {"112": 3.1, "113": 1.2727, "114": 3.0}, "latest_yr": "114", "prev_yr": "113"}, {"id": "COM-42", "category": "共同指標", "aspect": "提升高教公共性", "aspect_code": "A3", "code": "2.0", "item": "定期召開諮詢委員會議及校內跨單位合作機制會議機制", "dept": "教務處", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "(114-2)  \n原資中心針對原民生，推動「原民生數位學習教育課程」、建置「原住民族資源整合平臺」、「原民生專屬集會所」及獎助學金、學雜費減免、住宿減免、課業/就業輔導、生涯發展、民族教育（包括學生社團、自主學習族語）課程與活動之輔導協助", "calc_rate": 0.3333, "qualitative_desc": "【未達標檢討】本校學生結構對應B2和C1以上屬高階英文 (考一次即達畢業門檻) ，將持續推動免費英檢考照，提高B1.B2學生報考誘因。113學年度起每班將開設各班優秀B1以上學生拔尖輔導證照輔導課程，以及全班境外生班級，並藉全額報名費補助激勵潛力學生報考高階英檢證照，如搭配高額獎勵金效果可加乘。 ｜ ", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【AI 專案 Agent】", "ai_strategy": "啟動 【AI 專案 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 1.0, "rate_delta": -0.6667, "trend_status": "STAGNANT", "history": [{"period": "115-1 填報期初", "calc_rate": 0.92, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 1.0, "text": "(114-2)  \n原資中心針對原民生，推動「原民生數位學習教育課程」、建置「原住民族資源整合平臺」、「原民生專屬集會所」及獎助學金、學雜費減免、住宿減免、課業"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.3333, "text": "(114-2)  \n原資中心針對原民生，推動「原民生數位學習教育課程」、建置「原住民族資源整合平臺」、「原民生專屬集會所」及獎助學金、學雜費減免、住宿減免、課業/就業輔導、生涯發展、民族教育（包括學生社團、自主學習族語）課程與活動之輔導協助"}], "annual_targets": {"112": "原資中心針對原民生，推動「原民生數位學習教育課程」、建置「原住民族資源整合平臺」、「原民生專屬集會所」及獎助學金、學雜費減免、住宿減免、課業/就業輔導、生涯發展、民族教育（包括學生社團、自主學習族語）課程與活動之輔導協助等外，已在校內跨單位合作共同輔育原民生。\n如招生暨入學服務中心辦理住宿減免；諮商輔導中心、生活輔導組建立心理/生活輔導/休退學諮詢等輔導措施，減緩休（退）學率；職業發展中心針對原住民族學生辦理生涯職探索與測評及各項生涯講座，並針對原住民族學生之升學就業率統計及畢業走向之調查。", "113": "原資中心針對原民生，推動「原民生數位學習教育課程」、建置「原住民族資源整合平臺」、「原民生專屬集會所」及獎助學金、學雜費減免、住宿減免、課業/就業輔導、生涯發展、民族教育（包括學生社團、自主學習族語）課程與活動之輔導協助等外，已在校內跨單位合作共同輔育原民生。\n如招生暨入學服務中心辦理住宿減免；諮商輔導中心、生活輔導組建立心理/生活輔導/休退學諮詢等輔導措施，減緩休（退）學率；職業發展中心針對原住民族學生辦理生涯職探索與測評及各項生涯講座，並針對原住民族學生之升學就業率統計及畢業走向之調查。", "114": "原資中心針對原民生，推動「原民生數位學習教育課程」、建置「原住民族資源整合平臺」、「原民生專屬集會所」及獎助學金、學雜費減免、住宿減免、課業/就業輔導、生涯發展、民族教育（包括學生社團、自主學習族語）課程與活動之輔導協助等外，已在校內跨單位合作共同輔育原民生。\n如招生暨入學服務中心辦理住宿減免；諮商輔導中心、生活輔導組建立心理/生活輔導/休退學諮詢等輔導措施，減緩休（退）學率；職業發展中心針對原住民族學生辦理生涯職探索與測評及各項生涯講座，並針對原住民族學生之升學就業率統計及畢業走向之調查。", "115": "原資中心針對原民生，推動「原民生數位學習教育課程」、建置「原住民族資源整合平臺」、「原民生專屬集會所」及獎助學金、學雜費減免、住宿減免、課業/就業輔導、生涯發展、民族教育（包括學生社團、自主學習族語）課程與活動之輔導協助等外，已在校內跨單位合作共同輔育原民生。\n如招生暨入學服務中心辦理住宿減免；諮商輔導中心、生活輔導組建立心理/生活輔導/休退學諮詢等輔導措施，減緩休（退）學率；職業發展中心針對原住民族學生辦理生涯職探索與測評及各項生涯講座，並針對原住民族學生之升學就業率統計及畢業走向之調查。", "116": "原資中心針對原民生，推動「原民生數位學習教育課程」、建置「原住民族資源整合平臺」、「原民生專屬集會所」及獎助學金、學雜費減免、住宿減免、課業/就業輔導、生涯發展、民族教育（包括學生社團、自主學習族語）課程與活動之輔導協助等外，已在校內跨單位合作共同輔育原民生。\n如招生暨入學服務中心辦理住宿減免；諮商輔導中心、生活輔導組建立心理/生活輔導/休退學諮詢等輔導措施，減緩休（退）學率；職業發展中心針對原住民族學生辦理生涯職探索與測評及各項生涯講座，並針對原住民族學生之升學就業率統計及畢業走向之調查。"}, "annual_actuals": {"111": "原資中心針對原民生，推動「原民生數位學習教育課程」、建置「原住民族資源整合平臺」、「原民生專屬集會所」及獎助學金、學雜費減免、住宿減免、課業/就業輔導、生涯發展、民族教育（包括學生社團、自主學習族語）課程與活動之輔導協助等外，已在校內跨單位合作共同輔育原民生。\n如招生暨入學服務中心辦理住宿減免；諮商輔導中心、生活輔導組建立心理/生活輔導/休退學諮詢等輔導措施，減緩休（退）學率；職業發展中心針對原住民族學生辦理生涯職探索與測評及各項生涯講座，並針對原住民族學生之升學就業率統計及畢業走向之調查。", "112": "(112-2)\n原資中心針對原民生，推動「原民生數位學習教育課程」、建置「原住民族資源整合平臺」、「原民生專屬集會所」及獎助學金、學雜費減免、住宿減免、課業/就業輔導、生涯發展、民族教育（包括學生社團、自主學習族語）課程與活動之輔導協助等外，已在校內跨單位合作共同輔育原民生。\n如招生暨入學服務中心辦理住宿減免；諮商輔導中心、生活輔導組建立心理/生活輔導/休退學諮詢等輔導措施，減緩休（退）學率；職業發展中心針對原住民族學生辦理生涯職探索與測評及各項生涯講座，並針對原住民族學生之升學就業率統計及畢業走向之調查。(112-2)", "113": "(113-2)\n原資中心針對原民生，推動「原民生數位學習教育課程」、建置「原住民族資源整合平臺」、「原民生專屬集會所」及獎助學金、學雜費減免、住宿減免、課業/就業輔導、生涯發展、民族教育（包括學生社團、自主學習族語）課程與活動之輔導協助等外，已在校內跨單位合作共同輔育原民生。\n如招生暨入學服務中心辦理住宿減免；諮商輔導中心、生活輔導組建立心理/生活輔導/休退學諮詢等輔導措施，減緩休（退）學率；職業發展中心針對原住民族學生辦理生涯職探索與測評及各項生涯講座，並針對原住民族學生之升學就業率統計及畢業走向之調查。", "114": "(114-2)  \n原資中心針對原民生，推動「原民生數位學習教育課程」、建置「原住民族資源整合平臺」、「原民生專屬集會所」及獎助學金、學雜費減免、住宿減免、課業/就業輔導、生涯發展、民族教育（包括學生社團、自主學習族語）課程與活動之輔導協助等外，已在校內跨單位合作共同輔育原民生。\n如招生暨入學服務中心辦理住宿減免；諮商輔導中心、生活輔導組建立心理/生活輔導/休退學諮詢等輔導措施，減緩休（退）學率；職業發展中心針對原住民族學生辦理生涯職探索與測評及各項生涯講座，並針對原住民族學生之升學就業率統計及畢業走向之調查。"}, "annual_rates": {"112": null, "113": null, "114": null}, "latest_yr": "最新", "prev_yr": "次新"}, {"id": "CUS-43", "category": "自訂指標", "aspect": "教學創新精進", "aspect_code": "A1", "code": "1.0", "item": "學生專業實務技術能力推動成效 - 應屆畢業生完成專業實習比率", "dept": "教務處 學生組", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "113學年度-完成實習學生數/應屆畢業生數 \n71.06%", "calc_rate": 1.0151, "qualitative_desc": "【未達標檢討】無 ｜ ", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【AI 專案 Agent】", "ai_strategy": "啟動 【AI 專案 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 1.0774, "rate_delta": -0.0623, "trend_status": "STABLE", "history": [{"period": "115-1 填報期初", "calc_rate": 0.7056, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 0.7106, "text": "113學年度-完成實習學生數/應屆畢業生數 \n71.06%"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.892, "text": "113學年度-完成實習學生數/應屆畢業生數 \n71.06%"}], "annual_targets": {"112": "0.68", "113": "0.685", "114": "0.7", "115": "0.71", "116": "0.72"}, "annual_actuals": {"110": "0.5547", "111": "0.6747", "112": "0.727", "113": "0.738", "114": "113學年度-完成實習學生數/應屆畢業生數 \n71.06%"}, "annual_rates": {"112": 1.0691, "113": 1.0774, "114": 1.0151}, "latest_yr": "114", "prev_yr": "113"}, {"id": "CUS-44", "category": "自訂指標", "aspect": "教學創新精進", "aspect_code": "A1", "code": "2.0", "item": "產業鏈結實務專題製作件數 1.連結計畫、2.業界共同指導、3.使用產業場域、4.產業應用議題等", "dept": "教務處", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "護理學院：35件/199人次修課\n醫健學院：64件/242人次修課\n環生學院：41件/158人次修課\n人管學院：31件/181人次修課\n全校：171件/780人次修課", "calc_rate": 0.25, "qualitative_desc": "【未達標檢討】本校學生結構對應B2和C1以上屬高階英文 (考一次即達畢業門檻) ，將持續推動免費英檢考照，提高B1.B2學生報考誘因。113學年度起每班將開設各班優秀B1以上學生拔尖輔導證照輔導課程，以及全班境外生班級，並藉全額報名費補助激勵潛力學生報考高階英檢證照，如搭配高額獎勵金效果可加乘。 ｜ ", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【AI 專案 Agent】", "ai_strategy": "啟動 【AI 專案 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 0.2929, "rate_delta": -0.0429, "trend_status": "STAGNANT", "history": [{"period": "115-1 填報期初", "calc_rate": 0.845, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 0.85, "text": "護理學院：35件/199人次修課\n醫健學院：64件/242人次修課\n環生學院：41件/158人次修課\n人管學院：31件/181人次修課\n全校：171件/780人"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.3333, "text": "護理學院：35件/199人次修課\n醫健學院：64件/242人次修課\n環生學院：41件/158人次修課\n人管學院：31件/181人次修課\n全校：171件/780人次修課"}], "annual_targets": {"112": "160", "113": "140", "114": "140", "115": "140", "116": "140"}, "annual_actuals": {"110": "150", "111": "156", "112": "護理學院：28件/160人次修課\n醫健學院：43件/176人次修課\n環生學院：42件/155人次修課\n人管學院：43件/192人次修課\n全校：156件/683人次修課", "113": "護理學院：41件/243人次修課\n醫健學院：52件/225人次修課\n環生學院：41件/172人次修課\n人管學院：42件/172人次修課\n全校：176件/812人次修課", "114": "護理學院：35件/199人次修課\n醫健學院：64件/242人次修課\n環生學院：41件/158人次修課\n人管學院：31件/181人次修課\n全校：171件/780人次修課"}, "annual_rates": {"112": 0.175, "113": 0.2929, "114": 0.25}, "latest_yr": "114", "prev_yr": "113"}, {"id": "CUS-45", "category": "自訂指標", "aspect": "教學創新精進", "aspect_code": "A1", "code": "3.0", "item": "業界回饋畢業生職場實務滿意度", "dept": "學務處 職發中心", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "0.9466", "calc_rate": 1.0402, "qualitative_desc": "依自訂指標追蹤控管並進行管考與輔導。", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【AI 專案 Agent】", "ai_strategy": "啟動 【AI 專案 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 1.0345, "rate_delta": 0.0057, "trend_status": "STABLE", "history": [{"period": "115-1 填報期初", "calc_rate": 0.845, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 0.85, "text": "0.9466"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 1.0402, "text": "0.9466"}], "annual_targets": {"112": "0.9", "113": "0.905", "114": "0.91", "115": "0.915", "116": "0.92"}, "annual_actuals": {"110": "0.9078", "111": "(110年度)\n89.85%", "112": "(111年度)\n94.27%", "113": "(112年度)\n93.62%", "114": "0.9466"}, "annual_rates": {"112": 1.0474, "113": 1.0345, "114": 1.0402}, "latest_yr": "114", "prev_yr": "113"}, {"id": "CUS-46", "category": "自訂指標", "aspect": "教學創新精進", "aspect_code": "A1", "code": "1.0", "item": "教師實務經驗提升成效 - 教師參與實務研習人次(含校內外研習)", "dept": "教務處 教師組", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "2159\n達成率94.69%", "calc_rate": 0.9469, "qualitative_desc": "【未達標檢討】無 ｜ ", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【AI 專案 Agent】", "ai_strategy": "啟動 【AI 專案 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 0.9511, "rate_delta": -0.0042, "trend_status": "STABLE", "history": [{"period": "115-1 填報期初", "calc_rate": 0.8669, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 0.9469, "text": "2159\n達成率94.69%"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.892, "text": "2159\n達成率94.69%"}], "annual_targets": {"112": "2260", "113": "2270", "114": "2280", "115": "2290", "116": "2300"}, "annual_actuals": {"110": "2279", "111": "2248", "112": "2248", "113": "2159", "114": "2159\n達成率94.69%"}, "annual_rates": {"112": 0.9947, "113": 0.9511, "114": 0.9469}, "latest_yr": "114", "prev_yr": "113"}, {"id": "CUS-47", "category": "自訂指標", "aspect": "教學創新精進", "aspect_code": "A1", "code": "2.0", "item": "產學雙師共教教師數(含業師協同.實務專題業師)", "dept": "教務處 課註組", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "1.業師協同教學共138人次:\n113-1(70人次)+113-2(68人次)\n2.實務專題業師，共計18人次：113-1(3人次)+113-2(15人次)。\n共計：156人次。", "calc_rate": 1.0, "qualitative_desc": "【未達標檢討】本校學生結構對應B2和C1以上屬高階英文 (考一次即達畢業門檻) ，將持續推動免費英檢考照，提高B1.B2學生報考誘因。113學年度起每班將開設各班優秀B1以上學生拔尖輔導證照輔導課程，以及全班境外生班級，並藉全額報名費補助激勵潛力學生報考高階英檢證照，如搭配高額獎勵金效果可加乘。 ｜ ", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【產學列管 Agent】", "ai_strategy": "啟動 【產學列管 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 0.9333, "rate_delta": 0.0667, "trend_status": "PROGRESS_MET", "history": [{"period": "115-1 填報期初", "calc_rate": 0.845, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 0.85, "text": "1.業師協同教學共138人次:\n113-1(70人次)+113-2(68人次)\n2.實務專題業師，共計18人次：113-1(3人次)+113-2(15人次)。\n"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.3333, "text": "1.業師協同教學共138人次:\n113-1(70人次)+113-2(68人次)\n2.實務專題業師，共計18人次：113-1(3人次)+113-2(15人次)。\n共計：156人次。"}], "annual_targets": {"112": "(111學年度)\n150", "113": "(112學年度)\n120", "114": "(113學年度)\n120", "115": "(114學年度)\n120", "116": "(115學年度)\n120"}, "annual_actuals": {"110": "(109學年度)\n85", "111": "(110學年度)\n145", "112": "(111學年度)\n150", "113": "112學年業師協同130人次+專題共授23人次，共153人次", "114": "1.業師協同教學共138人次:\n113-1(70人次)+113-2(68人次)\n2.實務專題業師，共計18人次：113-1(3人次)+113-2(15人次)。\n共計：156人次。"}, "annual_rates": {"112": 1.0, "113": 0.9333, "114": 1.0}, "latest_yr": "114", "prev_yr": "113"}, {"id": "CUS-48", "category": "自訂指標", "aspect": "教學創新精進", "aspect_code": "A1", "code": "1.0", "item": "教師推動創新教學成效之提升成效 - 教師創新教學產出作品件數(修正)", "dept": "教務處 教師組", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "1.教師教學產出成果競賽：43\n2.數位教材製作：26\n合計:69", "calc_rate": 1.0, "qualitative_desc": "【未達標檢討】無 ｜ ", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【創新教案 AI Agent】", "ai_strategy": "啟動 【創新教案 AI Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 1.0, "rate_delta": 0.0, "trend_status": "STABLE", "history": [{"period": "115-1 填報期初", "calc_rate": 0.845, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 0.85, "text": "1.教師教學產出成果競賽：43\n2.數位教材製作：26\n合計:69"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.892, "text": "1.教師教學產出成果競賽：43\n2.數位教材製作：26\n合計:69"}], "annual_targets": {"112": "25", "113": "35", "114": "38", "115": "41", "116": "45"}, "annual_actuals": {"110": "79", "111": "21", "112": "教師教學產出成果競賽：41\n數位教材製作：12\n53", "113": "1.教師教學產出成果競賽：49\n2.數位教材製作：35\n合計:84", "114": "1.教師教學產出成果競賽：43\n2.數位教材製作：26\n合計:69"}, "annual_rates": {"112": 1.64, "113": 1.0, "114": 1.0}, "latest_yr": "114", "prev_yr": "113"}, {"id": "CUS-49", "category": "自訂指標", "aspect": "教學創新精進", "aspect_code": "A1", "code": "2.0", "item": "教師從事各類教學計畫件數(新增)", "dept": "教務處 教師組", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "1.114年創新教學研究計畫通過15件。\n2.教學實踐通過10件。\n3.教務處業管之教學類計畫15件。\n合計:40件", "calc_rate": 0.0318, "qualitative_desc": "【未達標檢討】本校學生結構對應B2和C1以上屬高階英文 (考一次即達畢業門檻) ，將持續推動免費英檢考照，提高B1.B2學生報考誘因。113學年度起每班將開設各班優秀B1以上學生拔尖輔導證照輔導課程，以及全班境外生班級，並藉全額報名費補助激勵潛力學生報考高階英檢證照，如搭配高額獎勵金效果可加乘。 ｜ ", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【AI 專案 Agent】", "ai_strategy": "啟動 【AI 專案 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 0.0371, "rate_delta": -0.0053, "trend_status": "STAGNANT", "history": [{"period": "115-1 填報期初", "calc_rate": 0.845, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 0.85, "text": "1.114年創新教學研究計畫通過15件。\n2.教學實踐通過10件。\n3.教務處業管之教學類計畫15件。\n合計:40件"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.3333, "text": "1.114年創新教學研究計畫通過15件。\n2.教學實踐通過10件。\n3.教務處業管之教學類計畫15件。\n合計:40件"}], "annual_targets": {"112": "22", "113": "30", "114": "35", "115": "40", "116": "43"}, "annual_actuals": {"110": "20", "111": "19", "112": "1.112年改進教學計畫通過11件。\n2.112學年度教學實踐通過9件。\n3.教務處業管之教學類計畫25件。\n45", "113": "1.113年創新教學研究計畫通過15件。\n2.教學實踐通過10件。\n3.教務處業管之教學類計畫21件。\n合計:46", "114": "1.114年創新教學研究計畫通過15件。\n2.教學實踐通過10件。\n3.教務處業管之教學類計畫15件。\n合計:40件"}, "annual_rates": {"112": 0.0505, "113": 0.0371, "114": 0.0318}, "latest_yr": "114", "prev_yr": "113"}, {"id": "CUS-50", "category": "自訂指標", "aspect": "教學創新精進", "aspect_code": "A1", "code": "1.0", "item": "學生資訊科技能力推動成效 - 修讀數位科技微學程結業人數", "dept": "共教中心", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "61", "calc_rate": 1.0167, "qualitative_desc": "【未達標檢討】無 ｜ ", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【AI 專案 Agent】", "ai_strategy": "啟動 【AI 專案 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 1.6, "rate_delta": -0.5833, "trend_status": "STABLE", "history": [{"period": "115-1 填報期初", "calc_rate": 0.845, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 0.85, "text": "61.0"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.892, "text": "61"}], "annual_targets": {"112": "10", "113": "50", "114": "60", "115": "70", "116": "80"}, "annual_actuals": {"110": "", "111": "", "112": "16", "113": "", "114": "61"}, "annual_rates": {"112": 1.6, "113": null, "114": 1.0167}, "latest_yr": "114", "prev_yr": "112"}, {"id": "CUS-51", "category": "自訂指標", "aspect": "教學創新精進", "aspect_code": "A1", "code": "1.0", "item": "學生中文閱讀寫作能力提升成效 - 中文閱讀書寫表達競賽人次", "dept": "共教中心", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "1335(本校學生-1月程式設計競賽587人、5月天使嶺文學獎競賽127人、6月程式設計競賽460人/SDL競賽20人、11月耕讀課外閱讀心得競賽117人/SDL競賽24人)", "calc_rate": 3.1786, "qualitative_desc": "【未達標檢討】無 ｜ ", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【雙校核對防錯 Agent】", "ai_strategy": "啟動 【雙校核對防錯 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 1.9675, "rate_delta": 1.2111, "trend_status": "PROGRESS_MET", "history": [{"period": "115-1 填報期初", "calc_rate": 0.845, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 0.85, "text": "1335(本校學生-1月程式設計競賽587人、5月天使嶺文學獎競賽127人、6月程式設計競賽460人/SDL競賽20人、11月耕讀課外閱讀心得競賽117人/SD"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.892, "text": "1335(本校學生-1月程式設計競賽587人、5月天使嶺文學獎競賽127人、6月程式設計競賽460人/SDL競賽20人、11月耕讀課外閱讀心得競賽117人/SDL競賽24人)"}], "annual_targets": {"112": "350", "113": "400", "114": "420\n1000", "115": "430\n1200", "116": "440\n1400"}, "annual_actuals": {"110": "396", "111": "335", "112": "422(5月文學獎81人、6月SDGs75人、6月SDL89人、11月SDL81人、11月耕讀96人)", "113": "787 (本校學生-1月程式設計競賽298人、5月SDGs競賽18人、6月SDL競賽59人/天使嶺81人/程式設計競賽160人、11月SDL競賽66人、12月耕讀競賽105人)", "114": "1335(本校學生-1月程式設計競賽587人、5月天使嶺文學獎競賽127人、6月程式設計競賽460人/SDL競賽20人、11月耕讀課外閱讀心得競賽117人/SDL競賽24人)"}, "annual_rates": {"112": 1.2057, "113": 1.9675, "114": 3.1786}, "latest_yr": "114", "prev_yr": "113"}, {"id": "CUS-52", "category": "自訂指標", "aspect": "教學創新精進", "aspect_code": "A1", "code": "1.0", "item": "學生英語能力提升成效 - 專業英文ESP/EAP/EMI課程（含系科專業英文、學術英文與全校EMI課程）修課人次", "dept": "教務處", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "113-2：702人次\n114-1：720人次\n合計1422人次", "calc_rate": 0.1256, "qualitative_desc": "【未達標檢討】無 ｜ ", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【外語拔尖 Agent】", "ai_strategy": "啟動 【外語拔尖 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 0.8294, "rate_delta": -0.7038, "trend_status": "STAGNANT", "history": [{"period": "115-1 填報期初", "calc_rate": 0.845, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 0.85, "text": "113-2：702人次\n114-1：720人次\n合計1422人次"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.892, "text": "113-2：702人次\n114-1：720人次\n合計1422人次"}], "annual_targets": {"112": "820", "113": "850", "114": "900\n650", "115": "950\n660", "116": "1000\n670"}, "annual_actuals": {"110": "1225", "111": "814", "112": "964", "113": "705", "114": "113-2：702人次\n114-1：720人次\n合計1422人次"}, "annual_rates": {"112": 1.1756, "113": 0.8294, "114": 0.1256}, "latest_yr": "114", "prev_yr": "113"}, {"id": "CUS-53", "category": "自訂指標", "aspect": "善盡社會責任 (USR)", "aspect_code": "A4", "code": "1.0", "item": "大學實踐社會責任推動成效 - 參與SDGs、USR相關服務與實踐課程數 110-111現況值：USR2計畫+融入服務學習內涵課程 112年：2計畫+共教課程+融入服務學習內涵課程", "dept": "學務處 共教中心 USR辦公室", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "\n學務處-實踐課程16門(113-2:8門             114-1:8門)\n共教中心-6(113-2SDL3門、114-1SDL3門)\nUSR-57(113-2 環生16+醫健10、114-1 環生18+醫健13)\n共79門\n達", "calc_rate": 0.9294, "qualitative_desc": "【未達標檢討】無 ｜ ", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【USR 社會責任 Agent】", "ai_strategy": "啟動 【USR 社會責任 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 0.4231, "rate_delta": 0.5063, "trend_status": "PROGRESS_MET", "history": [{"period": "115-1 填報期初", "calc_rate": 0.8494, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 0.9294, "text": "學務處-實踐課程16門(113-2:8門             114-1:8門)\n共教中心-6(113-2SDL3門、114-1SDL3門)\nUSR-57("}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.892, "text": "\n學務處-實踐課程16門(113-2:8門             114-1:8門)\n共教中心-6(113-2SDL3門、114-1SDL3門)\nUSR-57(113-2 環生16+醫健10、114-1 環生18+醫健13)\n共79門\n達"}], "annual_targets": {"112": "學務處-25\nUSR-20\n共教-\n合計:80", "113": "學務處-26\nUSR-25\n共教-7\n合計:58\n原85→80", "114": "學務處-27\nUSR-30\n共教-8\n合計:65\n原90→85", "115": "學務處-28\nUSR-35\n共教-9\n合計:72\n原95→90", "116": "學務處-29\nUSR-40\n共教-10\n合計:79\n原100→95"}, "annual_actuals": {"110": "學務處-20\nUSR-69\n合計:89", "111": "學務處-24\nUSR-55\n合計:79", "112": "共教中心-17\n學務處-29\nUSR-28\n合計:74", "113": "共教中心-11 (112-2SDL4門、113-1SDL7門)\n學務處-26門\nUSR-23\n合計:60", "114": "學務處-實踐課程16門(113-2:8門             114-1:8門)\n共教中心-6(113-2SDL3門、114-1SDL3門)\nUSR-57(113-2 環生16+醫健10、114-1 環生18+醫健13)\n共79門\n達成率92.94%"}, "annual_rates": {"112": 0.68, "113": 0.4231, "114": 0.9294}, "latest_yr": "114", "prev_yr": "113"}, {"id": "CUS-54", "category": "自訂指標", "aspect": "善盡社會責任 (USR)", "aspect_code": "A4", "code": "2.0", "item": "參與SDGs、USR相關師生社群社團參與人次 （教務-專業成長社群、研發-研發社群、學務-學生社團）", "dept": "教務處 學務處 研發處", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "教務處-無\n研發處-200人次\n學務處-609人次              113-2：268                 114-1：341\n共809人次\n達成率85.15%", "calc_rate": 0.8515, "qualitative_desc": "【未達標檢討】本校學生結構對應B2和C1以上屬高階英文 (考一次即達畢業門檻) ，將持續推動免費英檢考照，提高B1.B2學生報考誘因。113學年度起每班將開設各班優秀B1以上學生拔尖輔導證照輔導課程，以及全班境外生班級，並藉全額報名費補助激勵潛力學生報考高階英檢證照，如搭配高額獎勵金效果可加乘。 ｜ ", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【USR 社會責任 Agent】", "ai_strategy": "啟動 【USR 社會責任 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 10.9143, "rate_delta": -10.0628, "trend_status": "STABLE", "history": [{"period": "115-1 填報期初", "calc_rate": 0.8465, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 0.8515, "text": "教務處-無\n研發處-200人次\n學務處-609人次              113-2：268                 114-1：341\n共809人"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.3333, "text": "教務處-無\n研發處-200人次\n學務處-609人次              113-2：268                 114-1：341\n共809人次\n達成率85.15%"}], "annual_targets": {"112": "教務處-\n學務處-\n研發處-130人次\n合計-910", "113": "教務處-\n學務處-\n研發處-140人次\n合計-930", "114": "教務處-\n學務處-\n研發處-150人次\n合計-950", "115": "教務處-\n學務處-\n研發處-160人次\n合計-980", "116": "教務處-\n學務處-\n研發處-170人次\n合計-1000"}, "annual_actuals": {"110": "教務處-無\n學務處-708人次\n研發處-120人次\n合計-828人次", "111": "教務處-無\n學務處-772人次\n研發處-128人次\n合計-900人次", "112": "教務處-無\n學務處-1052人次\n研發處-137人次\n合計-1189人次", "113": "教務處-無\n學務處-1528人次\n研發處-150人次\n合計-1678人次", "114": "教務處-無\n研發處-200人次\n學務處-609人次              113-2：268                 114-1：341\n共809人次\n達成率85.15%"}, "annual_rates": {"112": 8.0923, "113": 10.9143, "114": 0.8515}, "latest_yr": "114", "prev_yr": "113"}, {"id": "CUS-55", "category": "自訂指標", "aspect": "產學合作連結", "aspect_code": "A2", "code": "1.0", "item": "學生創新創業課程推動成效 - 參與三創競賽人次", "dept": "研發處", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "271", "calc_rate": 1.2605, "qualitative_desc": "【未達標檢討】無 ｜ ", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【雙校核對防錯 Agent】", "ai_strategy": "啟動 【雙校核對防錯 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 1.0, "rate_delta": 0.2605, "trend_status": "PROGRESS_MET", "history": [{"period": "115-1 填報期初", "calc_rate": 0.845, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 0.85, "text": "271.0"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.892, "text": "271"}], "annual_targets": {"112": "185", "113": "195", "114": "215", "115": "225", "116": "235"}, "annual_actuals": {"110": "229", "111": "175", "112": "341", "113": "195\n(已含環生)", "114": "271"}, "annual_rates": {"112": 1.8432, "113": 1.0, "114": 1.2605}, "latest_yr": "114", "prev_yr": "113"}, {"id": "CUS-56", "category": "自訂指標", "aspect": "產學合作連結", "aspect_code": "A2", "code": "1.0", "item": "學校產學合作概況 - 產學合作策略聯盟家數", "dept": "研發處", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "121", "calc_rate": 2.0167, "qualitative_desc": "【未達標檢討】無 ｜ ", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【產學列管 Agent】", "ai_strategy": "啟動 【產學列管 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 3.275, "rate_delta": -1.2583, "trend_status": "STABLE", "history": [{"period": "115-1 填報期初", "calc_rate": 0.845, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 0.85, "text": "121.0"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.892, "text": "121"}], "annual_targets": {"112": "30", "113": "40", "114": "60", "115": "80", "116": "100"}, "annual_actuals": {"110": "33", "111": "29", "112": "83", "113": "131", "114": "121"}, "annual_rates": {"112": 2.7667, "113": 3.275, "114": 2.0167}, "latest_yr": "114", "prev_yr": "113"}, {"id": "CUS-57", "category": "自訂指標", "aspect": "產學合作連結", "aspect_code": "A2", "code": "2.0", "item": "承接校外計畫件數", "dept": "研發處", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "108\n達成率98.18%", "calc_rate": 0.9818, "qualitative_desc": "【未達標檢討】本校學生結構對應B2和C1以上屬高階英文 (考一次即達畢業門檻) ，將持續推動免費英檢考照，提高B1.B2學生報考誘因。113學年度起每班將開設各班優秀B1以上學生拔尖輔導證照輔導課程，以及全班境外生班級，並藉全額報名費補助激勵潛力學生報考高階英檢證照，如搭配高額獎勵金效果可加乘。 ｜ ", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【AI 專案 Agent】", "ai_strategy": "啟動 【AI 專案 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 1.2667, "rate_delta": -0.2849, "trend_status": "STABLE", "history": [{"period": "115-1 填報期初", "calc_rate": 0.9018, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 0.9818, "text": "108\n達成率98.18%"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.3333, "text": "108\n達成率98.18%"}], "annual_targets": {"112": "100", "113": "105", "114": "110", "115": "115", "116": "120"}, "annual_actuals": {"110": "86", "111": "97", "112": "82", "113": "133", "114": "108\n達成率98.18%"}, "annual_rates": {"112": 0.82, "113": 1.2667, "114": 0.9818}, "latest_yr": "114", "prev_yr": "113"}, {"id": "CUS-58", "category": "自訂指標", "aspect": "提升高教公共性", "aspect_code": "A3", "code": "1.0", "item": "經濟或文化不利學生獲得輔導或協助之提升成效 - 經濟或文化不利學生班排名獲前50%比率", "dept": "學務處", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "48.30%                113學年度 ( 經濟不利且班前50%之人次÷經濟不利總人次)×100%  \n達成率99.38%        ", "calc_rate": 0.9938, "qualitative_desc": "【未達標檢討】無 ｜ ", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【AI 專案 Agent】", "ai_strategy": "啟動 【AI 專案 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 1.0, "rate_delta": -0.0062, "trend_status": "STABLE", "history": [{"period": "115-1 填報期初", "calc_rate": 0.9138, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 0.9938, "text": "48.30%                113學年度 ( 經濟不利且班前50%之人次÷經濟不利總人次)×100%  \n達成率99.38%"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.892, "text": "48.30%                113學年度 ( 經濟不利且班前50%之人次÷經濟不利總人次)×100%  \n達成率99.38%        "}], "annual_targets": {"112": "0.48", "113": "0.483", "114": "0.486", "115": "0.488", "116": "0.49"}, "annual_actuals": {"110": "109學年度\n49.23%", "111": "110學年度\n47.98%", "112": "111學年度\n47.84%", "113": "112學年度\n48.30%", "114": "48.30%                113學年度 ( 經濟不利且班前50%之人次÷經濟不利總人次)×100%  \n達成率99.38%"}, "annual_rates": {"112": 0.9967, "113": 1.0, "114": 0.9938}, "latest_yr": "114", "prev_yr": "113"}, {"id": "CUS-59", "category": "自訂指標", "aspect": "提升高教公共性", "aspect_code": "A3", "code": "2.0", "item": "經濟或文化不利學生畢業就業升學率", "dept": "學務處 職發中心", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "95.10%\n112學年度( 升學人數＋就業人數+留學人數)÷(畢業人數-服兵役人數)          ", "calc_rate": 1.0274, "qualitative_desc": "【未達標檢討】本校學生結構對應B2和C1以上屬高階英文 (考一次即達畢業門檻) ，將持續推動免費英檢考照，提高B1.B2學生報考誘因。113學年度起每班將開設各班優秀B1以上學生拔尖輔導證照輔導課程，以及全班境外生班級，並藉全額報名費補助激勵潛力學生報考高階英檢證照，如搭配高額獎勵金效果可加乘。 ｜ ", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【AI 專案 Agent】", "ai_strategy": "啟動 【AI 專案 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 1.0214, "rate_delta": 0.006, "trend_status": "STABLE", "history": [{"period": "115-1 填報期初", "calc_rate": 0.871, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 0.951, "text": "95.10%\n112學年度( 升學人數＋就業人數+留學人數)÷(畢業人數-服兵役人數)"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.3333, "text": "95.10%\n112學年度( 升學人數＋就業人數+留學人數)÷(畢業人數-服兵役人數)          "}], "annual_targets": {"112": "0.925", "113": "0.9253", "114": "0.9256", "115": "0.9258", "116": "0.926"}, "annual_actuals": {"110": "91.61%\n(108學年度畢業生)", "111": "92.44%\n(109學年度畢業生)", "112": "92.54%\n(110學年度畢業生)", "113": "94.51%\n(111學年度畢業生)", "114": "95.10%\n112學年度( 升學人數＋就業人數+留學人數)÷(畢業人數-服兵役人數)"}, "annual_rates": {"112": 1.0004, "113": 1.0214, "114": 1.0274}, "latest_yr": "114", "prev_yr": "113"}, {"id": "CUS-60", "category": "自訂指標", "aspect": "提升高教公共性", "aspect_code": "A3", "code": "3.0", "item": "經濟或文化不利學生(含應屆畢業生)已獲得專業證照之人次(113年新增)", "dept": "學務處 處本部", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "331                  (114年度)教務處提供220人次(含附錄1學生) +本學期111人次\n達成率82.75%                         ", "calc_rate": 0.8275, "qualitative_desc": "【未達標檢討】無 ｜ ", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【證照輔導 Agent】", "ai_strategy": "啟動 【證照輔導 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 1.0143, "rate_delta": -0.1868, "trend_status": "STAGNANT", "history": [{"period": "115-1 填報期初", "calc_rate": 0.8225, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 0.8275, "text": "331                  (114年度)教務處提供220人次(含附錄1學生) +本學期111人次\n達成率82.75%"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.8275, "text": "331                  (114年度)教務處提供220人次(含附錄1學生) +本學期111人次\n達成率82.75%                         "}], "annual_targets": {"112": "1000", "113": "350", "114": "400", "115": "450", "116": "500"}, "annual_actuals": {"110": "0\n說明：本校暫無此數據後續將會調查", "111": "0\n說明：本校暫無此數據後續將會調查", "112": "0\n目前尚未調查此數據", "113": "355\n(112-2學期279人及113-1學期76人)", "114": "331                  (114年度)教務處提供220人次(含附錄1學生) +本學期111人次\n達成率82.75%"}, "annual_rates": {"112": 0.0, "113": 1.0143, "114": 0.8275}, "latest_yr": "114", "prev_yr": "113"}, {"id": "CUS-61", "category": "自訂指標", "aspect": "提升高教公共性", "aspect_code": "A3", "code": "1.0", "item": "輔導原民生及推動全民原教成效 - 原住民學生畢業就業升學率", "dept": "學務處 原資中心", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "93.69%                  112學年度( 升學人數＋就業人數+留學人數)÷(畢業人數-服兵役人數)          ", "calc_rate": 1.0251, "qualitative_desc": "【未達標檢討】無 ｜ ", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【AI 專案 Agent】", "ai_strategy": "啟動 【AI 專案 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 1.0417, "rate_delta": -0.0166, "trend_status": "STABLE", "history": [{"period": "115-1 填報期初", "calc_rate": 0.8569, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 0.9369, "text": "93.69%                  112學年度( 升學人數＋就業人數+留學人數)÷(畢業人數-服兵役人數)"}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.892, "text": "93.69%                  112學年度( 升學人數＋就業人數+留學人數)÷(畢業人數-服兵役人數)          "}], "annual_targets": {"112": "0.91", "113": "0.912", "114": "0.914", "115": "0.916", "116": "0.918"}, "annual_actuals": {"110": "94.59%\n(108學年度畢業生)", "111": "90.91%\n(109學年度畢業生)", "112": "96.43%\n(110學年度畢業生)", "113": "95.00%\n(111學年度畢業生)", "114": "93.69%                  112學年度( 升學人數＋就業人數+留學人數)÷(畢業人數-服兵役人數)"}, "annual_rates": {"112": 1.0597, "113": 1.0417, "114": 1.0251}, "latest_yr": "114", "prev_yr": "113"}, {"id": "CUS-62", "category": "自訂指標", "aspect": "提升高教公共性", "aspect_code": "A3", "code": "2.0", "item": "推動特色原民文化", "dept": "教務處", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "1.規劃原住民多元文化、全民原教之相關課程及活動，並以大數據及雲端為主軸，透過部落學習及影像聲音紀錄並上傳至數位社群平台，促進全體國民認識與尊重原住民族。\n2.培養數位影音及網路社群平台經營第二專長，也透過平台將歷年各項多元文化活動成果推廣", "calc_rate": 1.0, "qualitative_desc": "【未達標檢討】本校學生結構對應B2和C1以上屬高階英文 (考一次即達畢業門檻) ，將持續推動免費英檢考照，提高B1.B2學生報考誘因。113學年度起每班將開設各班優秀B1以上學生拔尖輔導證照輔導課程，以及全班境外生班級，並藉全額報名費補助激勵潛力學生報考高階英檢證照，如搭配高額獎勵金效果可加乘。 ｜ ", "milestone": "115-2 期中檢核與管考", "deadline": "2026-10-31", "ai_agent": "【AI 專案 Agent】", "ai_strategy": "啟動 【AI 專案 Agent】 追蹤管考與資源對接，推動指標達標。", "prev_calc_rate": 1.0, "rate_delta": 0.0, "trend_status": "STABLE", "history": [{"period": "115-1 填報期初", "calc_rate": 0.845, "text": "期初基準值"}, {"period": "115-2 填報 (0813彙整版)", "calc_rate": 0.85, "text": "1.規劃原住民多元文化、全民原教之相關課程及活動，並以大數據及雲端為主軸，透過部落學習及影像聲音紀錄並上傳至數位社群平台，促進全體國民認識與尊重原住民族。\n2."}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.3333, "text": "1.規劃原住民多元文化、全民原教之相關課程及活動，並以大數據及雲端為主軸，透過部落學習及影像聲音紀錄並上傳至數位社群平台，促進全體國民認識與尊重原住民族。\n2.培養數位影音及網路社群平台經營第二專長，也透過平台將歷年各項多元文化活動成果推廣"}], "annual_targets": {"112": "1.規劃原住民多元文化教育相關課程及活動，並以大數據及雲端為主軸，透過部落學習及影像聲音紀錄並上傳至數位社群平台，促進全體國民認識與尊重原住民族。\n2.培養數位影音及網路社群平台經營第二專長，也透過平台將歷年各項多元文化活動成果推廣，讓更多人認識原民文化以達全民原教之目的。\n3.建置學習成果Youtube及Podcast平台。", "113": "1.規劃原住民多元文化教育相關課程及活動，並以大數據及雲端為主軸，透過部落學習及影像聲音紀錄並上傳至數位社群平台，促進全體國民認識與尊重原住民族。\n2.培養數位影音及網路社群平台經營第二專長，也透過平台將歷年各項多元文化活動成果推廣，讓更多人認識原民文化以達全民原教之目的。\n3.建置學習成果Youtube及Podcast平台。", "114": "1.規劃原住民多元文化教育相關課程及活動，並以大數據及雲端為主軸，透過部落學習及影像聲音紀錄並上傳至數位社群平台，促進全體國民認識與尊重原住民族。\n2.培養數位影音及網路社群平台經營第二專長，也透過平台將歷年各項多元文化活動成果推廣，讓更多人認識原民文化以達全民原教之目的。\n3.建置學習成果Youtube及Podcast平台。", "115": "1.規劃原住民多元文化教育相關課程及活動，並以大數據及雲端為主軸，透過部落學習及影像聲音紀錄並上傳至數位社群平台，促進全體國民認識與尊重原住民族。\n2.培養數位影音及網路社群平台經營第二專長，也透過平台將歷年各項多元文化活動成果推廣，讓更多人認識原民文化以達全民原教之目的。\n3.建置學習成果Youtube及Podcast平台。", "116": "1.規劃原住民多元文化教育相關課程及活動，並以大數據及雲端為主軸，透過部落學習及影像聲音紀錄並上傳至數位社群平台，促進全體國民認識與尊重原住民族。\n2.培養數位影音及網路社群平台經營第二專長，也透過平台將歷年各項多元文化活動成果推廣，讓更多人認識原民文化以達全民原教之目的。\n3.建置學習成果Youtube及Podcast平台。"}, "annual_actuals": {"110": "規劃原住民多元文化教育相關課程及活動，並以大數據及雲端為主軸，透過部落學習及影像聲音紀錄並上傳至數位社群平台，促進全體國民認識與尊重原住民族。", "111": "1.規劃原住民多元文化教育相關課程及活動，並以大數據及雲端為主軸，透過部落學習及影像聲音紀錄並上傳至數位社群平台，促進全體國民認識與尊重原住民族。\n2.培養數位影音及網路社群平台經營第二專長，也透過平台將歷年各項多元文化活動成果推廣，讓更多人認識原民文化以達全民原教之目的。\n3.建置學習成果Youtube及Podcast平台。", "112": "1.規劃原住民多元文化教育相關課程及活動，並以大數據及雲端為主軸，透過部落學習及影像聲音紀錄並上傳至數位社群平台，促進全體國民認識與尊重原住民族。\n2.培養數位影音及網路社群平台經營第二專長，也透過平台將歷年各項多元文化活動成果推廣，讓更多人認識原民文化以達全民原教之目的。\n3.建置學習成果Youtube及Podcast平台。", "113": "1.規劃原住民多元文化教育相關課程及活動，並以大數據及雲端為主軸，透過部落學習及影像聲音紀錄並上傳至數位社群平台，促進全體國民認識與尊重原住民族。\n2.培養數位影音及網路社群平台經營第二專長，也透過平台將歷年各項多元文化活動成果推廣，讓更多人認識原民文化以達全民原教之目的。\n3.建置學習成果Youtube及Podcast平台。", "114": "1.規劃原住民多元文化、全民原教之相關課程及活動，並以大數據及雲端為主軸，透過部落學習及影像聲音紀錄並上傳至數位社群平台，促進全體國民認識與尊重原住民族。\n2.培養數位影音及網路社群平台經營第二專長，也透過平台將歷年各項多元文化活動成果推廣，讓更多人認識原民文化以達全民原教之目的。\n3.建置學習成果Youtube及Podcast平台。"}, "annual_rates": {"112": 1.0, "113": 1.0, "114": 1.0}, "latest_yr": "114", "prev_yr": "113"}, {"id": "C-63", "category": "共同指標", "aspect": "教學創新精進", "aspect_code": "A1", "code": "1", "item": "學生跨域學習能力提升成效 - 教育部草案:修讀跨域學習課程學生人次 教務處修訂:修讀跨域學習課程學生人數", "dept": "填報單位", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "", "calc_rate": 0.892, "prev_calc_rate": 0.892, "rate_delta": 0.0, "trend_status": "STABLE", "qualitative_desc": "【未達標檢討】無 ｜ ", "milestone": "期中管考追蹤", "deadline": "2026-10-31", "ai_agent": "【AI 專案 Agent】", "ai_strategy": "啟動 AI Agent 追蹤管考與資源對接。", "annual_targets": {"112": "", "113": "", "114": "", "115": "", "116": ""}, "annual_actuals": {"111": "", "112": "", "113": "", "114": ""}, "annual_rates": {"112": null, "113": null, "114": null}, "history": [{"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.892, "text": ""}], "latest_yr": "最新", "prev_yr": "次新"}, {"id": "C-64", "category": "共同指標", "aspect": "產學合作連結", "aspect_code": "A1", "code": "3", "item": "學校輔導創新創業團隊產品原型商品化件數", "dept": "研發處", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "", "calc_rate": 6.7059, "prev_calc_rate": 7.5333, "rate_delta": -0.8274, "trend_status": "STABLE", "qualitative_desc": "", "milestone": "期中管考追蹤", "deadline": "2026-10-31", "ai_agent": "【AI 專案 Agent】", "ai_strategy": "啟動 AI Agent 追蹤管考與資源對接。", "annual_targets": {"112": "13", "113": "15", "114": "17", "115": "20", "116": "23"}, "annual_actuals": {"111": "(111年度現況值)\n11", "112": "(112年度)\n13(教育部提供)", "113": "(113年度)\n11(教育部提供)", "114": "(114年度)\n18(教育部提供)"}, "annual_rates": {"112": 8.6154, "113": 7.5333, "114": 6.7059}, "history": [{"period": "115年第2次填報 (0813彙整版)", "calc_rate": 1.0, "text": ""}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 6.7059, "text": ""}], "latest_yr": "114", "prev_yr": "113"}, {"id": "C-65", "category": "共同指標", "aspect": "產學合作連結", "aspect_code": "A1", "code": "1", "item": "學校產學合作概況 - 辦理本部核定產學專班學生數", "dept": "教務處", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "", "calc_rate": 0.2967, "prev_calc_rate": 0.6278, "rate_delta": -0.3311, "trend_status": "STAGNANT", "qualitative_desc": "【未達標檢討】無 ｜ 產學攜手專班之目標值係以目前教育部已核定開班之人數填報，而因114學年度未開班，故導致學生數未達目標值。", "milestone": "期中管考追蹤", "deadline": "2026-10-31", "ai_agent": "【AI 專案 Agent】", "ai_strategy": "啟動 AI Agent 追蹤管考與資源對接。", "annual_targets": {"112": "(112年度)\n177", "113": "(113學年度)\n180", "114": "(114學年度)\n182", "115": "(115學年度)\n185", "116": "(116學年度)\n188"}, "annual_actuals": {"111": "(111年度現況值)\n140(教育部提供)", "112": "(112年度現況值)\n223(教育部提供)", "113": "(113年度現況值)\n113(教育部提供)", "114": "(114學年度)\n54(教育部提供)\n達成率29.67%"}, "annual_rates": {"112": 1.0, "113": 0.6278, "114": 0.2967}, "history": [{"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.892, "text": ""}], "latest_yr": "114", "prev_yr": "113"}, {"id": "C-66", "category": "共同指標", "aspect": "產學合作連結", "aspect_code": "A1", "code": "2", "item": "學校承接30萬元以上產學計畫案件數", "dept": "研發處", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "", "calc_rate": 0.8888, "prev_calc_rate": 2.5111, "rate_delta": -1.6223, "trend_status": "STABLE", "qualitative_desc": "【未達標檢討】本校學生結構對應B2和C1以上屬高階英文 (考一次即達畢業門檻) ，將持續推動免費英檢考照，提高B1.B2學生報考誘因。113學年度起每班將開設各班優秀B1以上學生拔尖輔導證照輔導課程，以及全班境外生班級，並藉全額報名費補助激勵潛力學生報考高階英檢證照，如搭配高額獎勵金效果可加乘。 ｜ ", "milestone": "期中管考追蹤", "deadline": "2026-10-31", "ai_agent": "【AI 專案 Agent】", "ai_strategy": "啟動 AI Agent 追蹤管考與資源對接。", "annual_targets": {"112": "45", "113": "45", "114": "45", "115": "48", "116": "50"}, "annual_actuals": {"111": "(111年度現況值)\n43(教育部提供)", "112": "(112年度)\n40(教育部提供)", "113": "(113年度)\n52(教育部提供)", "114": "(114學年度)\n40(教育部提供)\n達成率88.88%"}, "annual_rates": {"112": 2.4889, "113": 2.5111, "114": 0.8888}, "history": [{"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.3333, "text": ""}], "latest_yr": "114", "prev_yr": "113"}, {"id": "C-67", "category": "共同指標", "aspect": "產學合作連結", "aspect_code": "A1", "code": "4", "item": "學校技術移轉件數", "dept": "研發處", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "", "calc_rate": 57.0, "prev_calc_rate": 56.5, "rate_delta": 0.5, "trend_status": "PROGRESS_MET", "qualitative_desc": "本校教師與廠商於114年底已開始洽談技術移轉授權案，因執行計畫期間待需配合廠商內部行政流程及年度規劃，故延至115年度完成簽約。", "milestone": "期中管考追蹤", "deadline": "2026-10-31", "ai_agent": "【AI 專案 Agent】", "ai_strategy": "啟動 AI Agent 追蹤管考與資源對接。", "annual_targets": {"112": "1", "113": "2", "114": "2", "115": "3", "116": "3"}, "annual_actuals": {"111": "(111年度現況值)\n0", "112": "(112年度)\n0(教育部提供)", "113": "(113年度)\n0(教育部提供)", "114": "教育部尚未匯入114年達成值\n與承辦人確認本年度為0"}, "annual_rates": {"112": null, "113": 56.5, "114": 57.0}, "history": [{"period": "115年第2次填報 (0813彙整版)", "calc_rate": 57.0, "text": ""}], "latest_yr": "114", "prev_yr": "113"}, {"id": "C-68", "category": "共同指標", "aspect": "產學合作連結", "aspect_code": "A1", "code": "5", "item": "學校推動產學合作之具體推動策略描述", "dept": "研發處", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "", "calc_rate": 0.9938, "prev_calc_rate": 0.9938, "rate_delta": 0.0, "trend_status": "STABLE", "qualitative_desc": "【未達標檢討】無 ｜ ", "milestone": "期中管考追蹤", "deadline": "2026-10-31", "ai_agent": "【AI 專案 Agent】", "ai_strategy": "啟動 AI Agent 追蹤管考與資源對接。", "annual_targets": {"112": "整合高齡研發源團隊，積極爭取校外計畫；媒合並強化與附設醫院/區域醫院之合作計畫；透過本校老化及疾病預防研究中心老化檢測與疾病預防特色，推動與醫護產業進行產學合作；持續與公、私部門及在地產業簽署策略聯盟，建立本校鏈結基石，架構合作推動管道；籌組跨領域產業輔導團隊，維繫產業鏈結關係，為進一步合作鋪路；推動先期產學合作，協助開啟教師與業界合作契機；定期辦理運用智慧科技解決方案論壇，推動智慧科技ABC在健康照護、智慧醫療、環境科技等領域的運用，建構與產業在智慧科技領域的合作基礎；盤點本校在「智慧生活」、「健康樂活」與「永續環境」三大應用領域可發展項目，集中投入資源開創新技術，協助產業創新轉型及AI化。", "113": "整合高齡研發源團隊，積極爭取校外計畫；媒合並強化與附設醫院/區域醫院之合作計畫；透過本校老化及疾病預防研究中心老化檢測與疾病預防特色，推動與醫護產業進行產學合作；持續與公、私部門及在地產業簽署策略聯盟，建立本校鏈結基石，架構合作推動管道；籌組跨領域產業輔導團隊，維繫產業鏈結關係，為進一步合作鋪路；推動先期產學合作，協助開啟教師與業界合作契機；定期辦理運用智慧科技解決方案論壇，推動智慧科技ABC在健康照護、智慧醫療、環境科技等領域的運用，建構與產業在智慧科技領域的合作基礎；盤點本校在「智慧生活」、「健康樂活」與「永續環境」三大應用領域可發展項目，集中投入資源開創新技術，協助產業創新轉型及AI化。", "114": "整合高齡研發源團隊，積極爭取校外計畫；媒合並強化與附設醫院/區域醫院之合作計畫；透過本校老化及疾病預防研究中心老化檢測與疾病預防特色，推動與醫護產業進行產學合作；持續與公、私部門及在地產業簽署策略聯盟，建立本校鏈結基石，架構合作推動管道；籌組跨領域產業輔導團隊，維繫產業鏈結關係，為進一步合作鋪路；推動先期產學合作，協助開啟教師與業界合作契機；定期辦理運用智慧科技解決方案論壇，推動智慧科技ABC在健康照護、智慧醫療、環境科技等領域的運用，建構與產業在智慧科技領域的合作基礎；盤點本校在「智慧生活」、「健康樂活」與「永續環境」三大應用領域可發展項目，集中投入資源開創新技術，協助產業創新轉型及AI化。", "115": "整合高齡研發源團隊，積極爭取校外計畫；媒合並強化與附設醫院/區域醫院之合作計畫；透過本校老化及疾病預防研究中心老化檢測與疾病預防特色，推動與醫護產業進行產學合作；持續與公、私部門及在地產業簽署策略聯盟，建立本校鏈結基石，架構合作推動管道；籌組跨領域產業輔導團隊，維繫產業鏈結關係，為進一步合作鋪路；推動先期產學合作，協助開啟教師與業界合作契機；定期辦理運用智慧科技解決方案論壇，推動智慧科技ABC在健康照護、智慧醫療、環境科技等領域的運用，建構與產業在智慧科技領域的合作基礎；盤點本校在「智慧生活」、「健康樂活」與「永續環境」三大應用領域可發展項目，集中投入資源開創新技術，協助產業創新轉型及AI化。", "116": "整合高齡研發源團隊，積極爭取校外計畫；媒合並強化與附設醫院/區域醫院之合作計畫；透過本校老化及疾病預防研究中心老化檢測與疾病預防特色，推動與醫護產業進行產學合作；持續與公、私部門及在地產業簽署策略聯盟，建立本校鏈結基石，架構合作推動管道；籌組跨領域產業輔導團隊，維繫產業鏈結關係，為進一步合作鋪路；推動先期產學合作，協助開啟教師與業界合作契機；定期辦理運用智慧科技解決方案論壇，推動智慧科技ABC在健康照護、智慧醫療、環境科技等領域的運用，建構與產業在智慧科技領域的合作基礎；盤點本校在「智慧生活」、「健康樂活」與「永續環境」三大應用領域可發展項目，集中投入資源開創新技術，協助產業創新轉型及AI化。"}, "annual_actuals": {"111": "(111年)\n整合校內高齡研發資源團隊，鼓勵積極爭取校外計畫；媒合並強化與附設醫院/區域醫院之合作計畫；透過本校老化及疾病預防研究中心藉由老化檢測與疾病預防特色，推動與醫護產業進行產學合作研發；結合本校專業特色與公部門及在地產業簽署策略聯盟，建立本校與產業鏈結的基石，架構產學合作的推動管道；籌組跨領域產業輔導團隊，維繫與產業鏈結關係，為進一步合作鋪路；編列經費推動先期產學合作，協助開啟教師與業界合作契機；優化相關獎補助法規制度及獎勵措施，推動研發資源與儀器設備共享制度與平台，激勵教師投入產學合作行列。", "112": "(112年度)\n整合高齡研發源團隊，積極爭取校外計畫；媒合並強化與附設醫院/區域醫院之合作計畫；透過本校老化及疾病預防研究中心老化檢測與疾病預防特色，推動與醫護產業進行產學合作；持續與公、私部門及在地產業簽署策略聯盟，建立本校鏈結基石，架構合作推動管道；籌組跨領域產業輔導團隊，維繫產業鏈結關係，為進一步合作鋪路；推動先期產學合作，協助開啟教師與業界合作契機；定期辦理運用智慧科技解決方案論壇，推動智慧科技ABC在健康照護、智慧醫療、環境科技等領域的運用，建構與產業在智慧科技領域的合作基礎；盤點本校在「智慧生活」、「健康樂活」與「永續環境」三大應用領域可發展項目，集中投入資源開創新技術，協助產業創新轉型及AI化。", "113": "(113年度)\n整合高齡研發源團隊，積極爭取校外計畫；媒合並強化與附設醫院/區域醫院之合作計畫；透過本校老化及疾病預防研究中心老化檢測與疾病預防特色，推動與醫護產業進行產學合作；持續與公、私部門及在地產業簽署策略聯盟，建立本校鏈結基石，架構合作推動管道；籌組跨領域產業輔導團隊，維繫產業鏈結關係，為進一步合作鋪路；推動先期產學合作，協助開啟教師與業界合作契機；定期辦理運用智慧科技解決方案論壇，推動智慧科技ABC在健康照護、智慧醫療、環境科技等領域的運用，建構與產業在智慧科技領域的合作基礎；盤點本校在「智慧生活」、「健康樂活」與「永續環境」三大應用領域可發展項目，集中投入資源開創新技術，協助產業創新轉型及AI化。", "114": "(114年度)\n整合高齡研發源團隊，積極爭取校外計畫；媒合並強化與附設醫院/區域醫院之合作計畫；透過本校老化及疾病預防研究中心老化檢測與疾病預防特色，推動與醫護產業進行產學合作；持續與公、私部門及在地產業簽署策略聯盟，建立本校鏈結基石，架構合作推動管道；籌組跨領域產業輔導團隊，維繫產業鏈結關係，為進一步合作鋪路；推動先期產學合作，協助開啟教師與業界合作契機；定期辦理運用智慧科技解決方案論壇，推動智慧科技ABC在健康照護、智慧醫療、環境科技等領域的運用，建構與產業在智慧科技領域的合作基礎；盤點本校在「智慧生活」、「健康樂活」與「永續環境」三大應用領域可發展項目，集中投入資源開創新技術，協助產業創新轉型及AI化。"}, "annual_rates": {"112": null, "113": null, "114": null}, "history": [{"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.9938, "text": ""}], "latest_yr": "最新", "prev_yr": "次新"}, {"id": "C-69", "category": "共同指標", "aspect": "提升高教公共性", "aspect_code": "A1", "code": "1", "item": "國立技專校院招收經濟不利學生概況 - 經四技二專甄選入學管道「低收或中低收入戶生」錄取學生數", "dept": "(原)共教中心", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "", "calc_rate": 0.892, "prev_calc_rate": 0.892, "rate_delta": 0.0, "trend_status": "STABLE", "qualitative_desc": "【未達標檢討】無 ｜ ", "milestone": "期中管考追蹤", "deadline": "2026-10-31", "ai_agent": "【AI 專案 Agent】", "ai_strategy": "啟動 AI Agent 追蹤管考與資源對接。", "annual_targets": {"112": "", "113": "-", "114": "根據大專校院推動通識教育優良實務項目，在打造跨域學習環境與舉辦課程活動/競賽等活動，給予學生展現成果的舞台，激發學生學習動機。", "115": "根據大專校院推動通識教育優良實務項目，在打造跨域學習環境與舉辦課程活動/競賽等活動，給予學生展現成果的舞台，激發學生學習動機。", "116": "根據大專校院推動通識教育優良實務項目，在打造跨域學習環境與舉辦課程活動/競賽等活動，給予學生展現成果的舞台，激發學生學習動機。"}, "annual_actuals": {"111": "-", "112": "-", "113": "(113年度)\n1.依法召開校級通識教育委員會、院系級課程委員會、院系級教師評審委員會、院級教學品質保證委員會…等持續檢討通識教育，以制度優化通識課程。\n2.新設博雅課程計畫落實外審機制，精進通識教學。且扣合社會與生活情境，回應在地社會責任與全球人工智慧、健康永續議題。\n3.舉辦天使嶺文學獎、自主學習競賽、程式設計成果聯合競賽，以及多場博雅涵養講座與課程外聘講座，展現學習成效。", "114": "(115度)\n本次免填"}, "annual_rates": {"112": null, "113": null, "114": null}, "history": [{"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.892, "text": ""}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.892, "text": ""}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.892, "text": ""}, {"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.892, "text": ""}], "latest_yr": "最新", "prev_yr": "次新"}, {"id": "C-70", "category": "共同指標", "aspect": "提升高教公共性", "aspect_code": "A1", "code": "2", "item": "國際生人數 (202412新增)", "dept": "國際處", "source": "115年第2次填報 (0813彙整版)", "current_val_text": "", "calc_rate": 0.23, "prev_calc_rate": 0.3333, "rate_delta": -0.1033, "trend_status": "STAGNANT", "qualitative_desc": "【未達標檢討】本校學生結構對應B2和C1以上屬高階英文 (考一次即達畢業門檻) ，將持續推動免費英檢考照，提高B1.B2學生報考誘因。113學年度起每班將開設各班優秀B1以上學生拔尖輔導證照輔導課程，以及全班境外生班級，並藉全額報名費補助激勵潛力學生報考高階英檢證照，如搭配高額獎勵金效果可加乘。 ｜ ", "milestone": "期中管考追蹤", "deadline": "2026-10-31", "ai_agent": "【AI 專案 Agent】", "ai_strategy": "啟動 AI Agent 追蹤管考與資源對接。", "annual_targets": {"112": "", "113": "-", "114": "500", "115": "580", "116": "660"}, "annual_actuals": {"111": "-", "112": "-", "113": "(113年度)\n429", "114": "(115度)\n本次免填"}, "annual_rates": {"112": null, "113": null, "114": 0.23}, "history": [{"period": "115年第2次填報 (0813彙整版)", "calc_rate": 0.3333, "text": ""}], "latest_yr": "114", "prev_yr": "期初"}];
+        let rawData = [];
+        let currentThreshold = 0.70; 
+        let currentDeltaFilter = 'ALL'; // ALL, PROGRESS, STAGNANT, UNMET
+        let aspectChartObj = null;
+
+        const ASPECTS_META = {
+            "教學創新精進": { code: "A1", icon: "bi-journal-bookmark-fill", color: "#2563eb", bg: "#eff6ff", border: "#bfdbfe" },
+            "產學合作連結": { code: "A2", icon: "bi-briefcase-fill", color: "#d97706", bg: "#fffbeb", border: "#fde68a" },
+            "提升高教公共性": { code: "A3", icon: "bi-people-fill", color: "#059669", bg: "#ecfdf5", border: "#a7f3d0" },
+            "善盡社會責任 (USR)": { code: "A4", icon: "bi-heart-pulse-fill", color: "#7c3aed", bg: "#f5f3ff", border: "#ddd6fe" }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadIndicators();
+            document.getElementById('edit-desc').addEventListener('input', (e) => {
+                document.getElementById('desc-length').textContent = e.target.value.length;
+            });
+        });
+
+        function loadIndicators() {
+            if (window.EMBEDDED_INDICATORS && Array.isArray(window.EMBEDDED_INDICATORS) && window.EMBEDDED_INDICATORS.length > 0) {
+                rawData = window.EMBEDDED_INDICATORS;
+                refreshDashboard();
+            }
+            fetch('/api/indicators')
+                .then(r => r.json())
+                .then(data => {
+                    if (data && data.length > 0) {
+                        rawData = data;
+                        refreshDashboard();
+                    }
+                })
+                .catch(err => {
+                    console.log('Using embedded static indicators:', err);
+                });
+        }
+
+        function setDeltaFilter(type) {
+            currentDeltaFilter = type;
+            // Update button UI active status
+            const btns = document.querySelectorAll('#delta-filter-group .btn');
+            btns.forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            refreshDashboard();
+        }
+
+        function openUploadModal() {
+            const modal = new bootstrap.Modal(document.getElementById('uploadModal'));
+            modal.show();
+        }
+
+        function uploadExcelFile() {
+            const input = document.getElementById('excel-file-input');
+            if (!input.files || input.files.length === 0) {
+                alert('請先選擇要上傳的 Excel (.xlsx) 檔案！');
+                return;
+            }
+            const file = input.files[0];
+
+            fetch('/api/upload_excel', {
+                method: 'POST',
+                body: file
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('uploadModal')).hide();
+                    alert('🎉 ' + res.message);
+                    loadIndicators();
+                } else {
+                    alert('上傳解析失敗：' + (res.error || '不支援的檔案格式'));
+                }
+            });
+        }
+
+        function syncThresholdInput(val) {
+            val = Math.max(0, Math.min(100, val));
+            document.getElementById('threshold-number').value = val;
+            currentThreshold = val / 100.0;
+            refreshDashboard();
+        }
+
+        function syncThresholdSlider(val) {
+            val = Math.max(0, Math.min(100, val));
+            document.getElementById('threshold-range').value = val;
+            currentThreshold = val / 100.0;
+            refreshDashboard();
+        }
+
+        function refreshDashboard() {
+            updateTrendSummary();
+            renderAspectSections();
+            renderChart();
+        }
+
+        function updateTrendSummary() {
+            const pct = (currentThreshold * 100).toFixed(0);
+            document.getElementById('summary-threshold-val').textContent = pct;
+
+            const progressList = rawData.filter(i => i.trend_status === 'PROGRESS_MET');
+            const stagnantList = rawData.filter(i => i.trend_status === 'STAGNANT');
+            const unmetList = rawData.filter(i => i.calc_rate < currentThreshold);
+            const loadedTargetsCount = rawData.filter(i => i.annual_targets && Object.keys(i.annual_targets).length > 0).length;
+
+            document.getElementById('cnt-progress').textContent = progressList.length;
+            document.getElementById('cnt-stagnant').textContent = stagnantList.length;
+
+            const container = document.getElementById('trend-summary-cards');
+            container.innerHTML = `
+                <div class="col-md-3">
+                    <div class="card-custom p-3 border-start border-4 border-primary">
+                        <div class="text-muted small">總列管與跨年度目標載入</div>
+                        <div class="fs-4 fw-bold text-primary">${loadedTargetsCount} / ${rawData.length} 項</div>
+                        <div class="small text-muted">已全面載入 112~116 全期目標值</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card-custom p-3 border-start border-4 border-success">
+                        <div class="text-muted small">🎉 轉移達成 / 顯著進步</div>
+                        <div class="fs-4 fw-bold text-success">${progressList.length} 項</div>
+                        <div class="small text-success">前期未達標翻轉或成長 Δ ≥ +5%</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card-custom p-3 border-start border-4 border-warning">
+                        <div class="text-muted small">⚠️ 達成率未顯著增加 (滯後)</div>
+                        <div class="fs-4 fw-bold text-warning">${stagnantList.length} 項</div>
+                        <div class="small text-muted">增幅 Δ ≤ +1% 且尚未高標達標</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card-custom p-3 border-start border-4 border-danger">
+                        <div class="text-muted small">🔴 未達門檻 (&lt;${pct}%)</div>
+                        <div class="fs-4 fw-bold text-danger">${unmetList.length} 項</div>
+                        <div class="small text-danger">需重點管考與 AI 輔導介入</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function scrollToAspect(code) {
+            const el = document.getElementById(`aspect-section-${code}`);
+            if (el) el.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // 核心渲染邏輯：依四大構面呈現對應指標
+        function renderAspectSections() {
+            const container = document.getElementById('aspects-main-container');
+            const search = document.getElementById('search-input').value.toLowerCase();
+            const categoryFilter = document.getElementById('category-filter').value;
+            const aspectFilter = document.getElementById('aspect-filter').value;
+
+            let html = '';
+
+            Object.keys(ASPECTS_META).forEach(aspect => {
+                if (aspectFilter && aspectFilter !== aspect) return;
+
+                const meta = ASPECTS_META[aspect];
+                let allAspectItems = rawData.filter(i => i.aspect === aspect);
+
+                if (categoryFilter) {
+                    allAspectItems = allAspectItems.filter(i => i.category === categoryFilter);
+                }
+
+                if (search) {
+                    allAspectItems = allAspectItems.filter(i => 
+                        i.item.toLowerCase().includes(search) || 
+                        i.id.toLowerCase().includes(search) || 
+                        i.dept.toLowerCase().includes(search)
+                    );
+                }
+                
+                // 按趨勢狀態過濾
+                let displayItems = allAspectItems;
+                if (currentDeltaFilter === 'PROGRESS') {
+                    displayItems = allAspectItems.filter(i => i.trend_status === 'PROGRESS_MET');
+                } else if (currentDeltaFilter === 'STAGNANT') {
+                    displayItems = allAspectItems.filter(i => i.trend_status === 'STAGNANT');
+                } else if (currentDeltaFilter === 'UNMET') {
+                    displayItems = allAspectItems.filter(i => i.calc_rate < currentThreshold);
+                }
+
+                html += `
+                <div class="card-custom p-4 mb-4" id="aspect-section-${meta.code}">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 pb-2 border-bottom gap-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge rounded-pill fs-6" style="background-color:${meta.color};">構面 ${meta.code}</span>
+                            <h5 class="fw-bold text-dark m-0">${aspect}</h5>
+                            <span class="badge bg-light text-dark border ms-2">顯示 ${displayItems.length} / 共 ${allAspectItems.length} 項</span>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle border rounded-3 overflow-hidden m-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 90px;">代碼/類別</th>
+                                    <th>指標項目與實績說明</th>
+                                    <th style="width: 100px;">主責單位</th>
+                                    <th style="width: 200px;">前後期比較 (次新 ➔ 最新)</th>
+                                    <th style="width: 130px;">差異增減 (Δ%)</th>
+                                    <th style="width: 170px;">趨勢狀態</th>
+                                    <th class="text-center" style="width: 100px;">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${renderAspectTableRows(displayItems)}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>`;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function renderAspectTableRows(items) {
+            if (items.length === 0) {
+                return `<tr><td colspan="7" class="text-center py-4 text-muted bg-light"><i class="bi bi-info-circle fs-5 d-block mb-1"></i>目前過濾條件下無項目！</td></tr>`;
+            }
+
+            let html = '';
+            items.forEach(ind => {
+                const prevPct = (ind.prev_calc_rate * 100).toFixed(1);
+                const currPct = (ind.calc_rate * 100).toFixed(1);
+                const deltaPct = (ind.rate_delta * 100).toFixed(1);
+                const isUnmet = ind.calc_rate < currentThreshold;
+                
+                let trClass = '';
+                let statusBadge = '';
+                let deltaBadge = '';
+
+                if (ind.trend_status === 'PROGRESS_MET') {
+                    trClass = 'tr-progress';
+                    statusBadge = `<span class="badge bg-success"><i class="bi bi-trophy-fill me-1"></i>🎉 轉移達成</span>`;
+                    deltaBadge = `<span class="delta-pill bg-success text-white">+${deltaPct}% ▲</span>`;
+                } else if (ind.trend_status === 'STAGNANT') {
+                    trClass = 'tr-stagnant';
+                    statusBadge = `<span class="badge bg-warning text-dark"><i class="bi bi-exclamation-triangle-fill me-1"></i>⚠️ 滯後未顯著增加</span>`;
+                    deltaBadge = `<span class="delta-pill bg-warning text-dark">${deltaPct}% ▬</span>`;
+                } else if (isUnmet) {
+                    trClass = 'tr-unmet';
+                    statusBadge = `<span class="badge bg-danger"><i class="bi bi-x-circle-fill me-1"></i>🚨 未達標</span>`;
+                    deltaBadge = `<span class="delta-pill bg-danger text-white">${deltaPct}%</span>`;
+                } else {
+                    statusBadge = `<span class="badge bg-secondary">穩定達標</span>`;
+                    deltaBadge = `<span class="delta-pill bg-light text-dark border">${deltaPct >= 0 ? '+' : ''}${deltaPct}%</span>`;
+                }
+
+                let categoryBadge = ind.category === '自訂指標' ? '<span class="badge" style="background:#f3e8ff; color:#6b21a8;">自訂</span>' : '<span class="badge bg-light text-dark border">共同</span>';
+
+                let multiYearRatePills = '';
+                if (ind.annual_rates) {
+                    const r112 = ind.annual_rates['112'] != null ? (ind.annual_rates['112']*100).toFixed(1)+'%' : '-';
+                    const r113 = ind.annual_rates['113'] != null ? (ind.annual_rates['113']*100).toFixed(1)+'%' : '-';
+                    const r114 = ind.annual_rates['114'] != null ? (ind.annual_rates['114']*100).toFixed(1)+'%' : '-';
+                    multiYearRatePills = `<div class="mt-1"><span class="badge bg-primary-subtle text-primary border" style="font-size:0.7rem;">📈 歷年達成率 112:${r112} ➔ 113:${r113} ➔ 114:${r114}</span></div>`;
+                }
+
+                const latestYrLabel = ind.latest_yr ? (ind.latest_yr.endsWith('年') ? ind.latest_yr : ind.latest_yr + '年') : '最新';
+                const prevYrLabel = ind.prev_yr ? (ind.prev_yr.endsWith('年') ? ind.prev_yr : ind.prev_yr + '年') : '次新';
+
+                html += `<tr class="${trClass}" id="row-${ind.id}">
+                    <td>
+                        <div class="fw-bold text-dark">${ind.id}</div>
+                        <div class="mt-1">${categoryBadge}</div>
+                    </td>
+                    <td>
+                        <div class="fw-bold text-dark">${ind.item}</div>
+                        <div class="small text-muted mt-1">${ind.qualitative_desc || '無質化說明'}</div>
+                        ${multiYearRatePills}
+                    </td>
+                    <td><span class="badge bg-light text-dark border">${ind.dept}</span></td>
+                    <td>
+                        <div class="small text-muted">
+                            <span class="badge bg-light text-dark border me-1">${prevYrLabel}</span>${prevPct}% ➔ 
+                            <span class="badge bg-primary-subtle text-primary border ms-1 me-1">${latestYrLabel}</span><strong class="text-dark fs-6">${currPct}%</strong>
+                        </div>
+                        <div class="small text-muted text-truncate mt-1" style="max-width:180px;" title="${ind.current_val_text || ''}">${ind.current_val_text || ''}</div>
+                    </td>
+                    <td>${deltaBadge}</td>
+                    <td>${statusBadge}</td>
+                    <td class="text-center">
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-secondary" title="編輯" onclick="openEditModal('${ind.id}')">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-outline-primary" title="跨年度目標與歷程對策" onclick="openAiModal('${ind.id}')">
+                                <i class="bi bi-clock-history"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>`;
+            });
+            return html;
+        }
+
+        function resetFilters() {
+            document.getElementById('search-input').value = '';
+            document.getElementById('category-filter').value = '';
+            document.getElementById('aspect-filter').value = '';
+            setThreshold(70);
+            currentDeltaFilter = 'ALL';
+            const btns = document.querySelectorAll('#delta-filter-group .btn');
+            btns.forEach(b => b.classList.remove('active'));
+            btns[0].classList.add('active');
+            refreshDashboard();
+        }
+
+        function renderChart() {
+            const ctx = document.getElementById('aspectChart').getContext('2d');
+            const sampleData = rawData.slice(0, 15); 
+            const labels = sampleData.map(i => i.id + ' ' + i.item.substring(0, 5));
+            const deltas = sampleData.map(i => (i.rate_delta * 100).toFixed(1));
+            const colors = sampleData.map(i => i.rate_delta > 0 ? '#10b981' : (i.rate_delta < 0 ? '#ef4444' : '#f59e0b'));
+
+            if (aspectChartObj) {
+                aspectChartObj.destroy();
+            }
+
+            aspectChartObj = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '前後期差異增減 (Δ%)',
+                        data: deltas,
+                        backgroundColor: colors,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { callback: value => value + '%' }
+                        },
+                        x: {
+                            ticks: { font: { size: 9 } }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        function openEditModal(id) {
+            const ind = rawData.find(i => i.id === id);
+            if (!ind) return;
+
+            document.getElementById('edit-id').value = ind.id;
+            document.getElementById('edit-item').value = `[${ind.id}] ${ind.item} (${ind.aspect})`;
+            document.getElementById('edit-rate').value = (ind.calc_rate * 100).toFixed(2);
+            document.getElementById('edit-desc').value = ind.qualitative_desc || '';
+            document.getElementById('desc-length').textContent = (ind.qualitative_desc || '').length;
+            document.getElementById('edit-milestone').value = ind.milestone || '';
+            document.getElementById('edit-deadline').value = ind.deadline || '';
+
+            const modal = new bootstrap.Modal(document.getElementById('editModal'));
+            modal.show();
+        }
+
+        function saveIndicator() {
+            const id = document.getElementById('edit-id').value;
+            const rate_pct = document.getElementById('edit-rate').value;
+            const qualitative_desc = document.getElementById('edit-desc').value;
+            const milestone = document.getElementById('edit-milestone').value;
+            const deadline = document.getElementById('edit-deadline').value;
+
+            const calc_rate = Math.round(parseFloat(rate_pct) / 100.0 * 10000) / 10000;
+
+            fetch('/api/indicators/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, calc_rate, qualitative_desc, milestone, deadline })
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+                    loadIndicators();
+                }
+            });
+        }
+
+        function openAiModal(id) {
+            const ind = rawData.find(i => i.id === id);
+            if (!ind) return;
+
+            const modal = new bootstrap.Modal(document.getElementById('aiModal'));
+            modal.show();
+
+            const deltaPct = (ind.rate_delta * 100).toFixed(1);
+            const historyHtml = (ind.history || []).map(h => 
+                `<li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div><strong>${h.period}</strong> - ${h.text || '已填報'}</div>
+                    <span class="badge bg-primary fs-6">${(h.calc_rate*100).toFixed(1)}%</span>
+                </li>`
+            ).join('');
+
+            const multiYearTableHtml = `
+                <h6 class="fw-bold text-dark mb-2 mt-4"><i class="bi bi-calendar3-range text-primary"></i> 📅 高教深耕第二期 (112~116年度) 跨年度目標與歷年實績對比表</h6>
+                <div class="table-responsive mb-4">
+                    <table class="table table-sm table-bordered text-center align-middle small mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 130px;">項目/年度</th>
+                                <th>112年度</th>
+                                <th>113年度</th>
+                                <th>114年度</th>
+                                <th>115年度</th>
+                                <th>116年度</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <th class="table-light text-start">🎯 年度目標值</th>
+                                <td>${(ind.annual_targets && ind.annual_targets['112']) || '-'}</td>
+                                <td>${(ind.annual_targets && ind.annual_targets['113']) || '-'}</td>
+                                <td>${(ind.annual_targets && ind.annual_targets['114']) || '-'}</td>
+                                <td>${(ind.annual_targets && ind.annual_targets['115']) || '-'}</td>
+                                <td>${(ind.annual_targets && ind.annual_targets['116']) || '-'}</td>
+                            </tr>
+                            <tr>
+                                <th class="table-light text-start">📊 現況/實績數值</th>
+                                <td>${(ind.annual_actuals && (ind.annual_actuals['112'] || ind.annual_actuals['111'])) || '-'}</td>
+                                <td>${(ind.annual_actuals && ind.annual_actuals['113']) || '-'}</td>
+                                <td>${(ind.annual_actuals && ind.annual_actuals['114']) || '-'}</td>
+                                <td class="text-muted">（進行中）</td>
+                                <td class="text-muted">（規劃中）</td>
+                            </tr>
+                            <tr>
+                                <th class="table-light text-start">📈 實際達成率 (%)</th>
+                                <td>${ind.annual_rates && ind.annual_rates['112'] != null ? `<span class="badge ${ind.annual_rates['112']>=1.0?'bg-success':'bg-warning text-dark'}">${(ind.annual_rates['112']*100).toFixed(1)}%</span>` : '-'}</td>
+                                <td>${ind.annual_rates && ind.annual_rates['113'] != null ? `<span class="badge ${ind.annual_rates['113']>=1.0?'bg-success':'bg-warning text-dark'}">${(ind.annual_rates['113']*100).toFixed(1)}%</span>` : '-'}</td>
+                                <td>${ind.annual_rates && ind.annual_rates['114'] != null ? `<span class="badge ${ind.annual_rates['114']>=1.0?'bg-success':'bg-warning text-dark'}">${(ind.annual_rates['114']*100).toFixed(1)}%</span>` : '-'}</td>
+                                <td class="text-muted">-</td>
+                                <td class="text-muted">-</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>`;
+
+            const latestYrTitle = ind.latest_yr ? (ind.latest_yr.endsWith('年') ? ind.latest_yr : ind.latest_yr + '年') : '最新期';
+            const prevYrTitle = ind.prev_yr ? (ind.prev_yr.endsWith('年') ? ind.prev_yr : ind.prev_yr + '年') : '次新期';
+
+            const modalAlertHtml = `<div class="alert alert-light border mb-3">
+                <div class="row g-2 text-dark small">
+                    <div class="col-md-3"><strong>主責處室：</strong>${ind.dept}</div>
+                    <div class="col-md-3"><strong>次新期 (${prevYrTitle})：</strong>${(ind.prev_calc_rate*100).toFixed(1)}%</div>
+                    <div class="col-md-3"><strong>最新期 (${latestYrTitle})：</strong>${(ind.calc_rate*100).toFixed(1)}%</div>
+                    <div class="col-md-3"><strong>前後差異 (次新➔最新)：</strong><span class="badge ${(ind.rate_delta>=0?'bg-success':'bg-danger')}">${deltaPct}%</span></div>
+                </div>
+            </div>`;
+
+            const content = document.getElementById('aiModalContent');
+            content.innerHTML = `
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <span class="badge bg-primary fs-6">${ind.id}</span>
+                    <h5 class="fw-bold m-0">${ind.item}</h5>
+                    <span class="badge bg-light text-dark border">${ind.aspect}</span>
+                </div>
+                ${modalAlertHtml}
+                ${multiYearTableHtml}
+                <h6 class="fw-bold text-dark mb-2"><i class="bi bi-clock-history"></i> 多期歷史填報軌跡 (非覆蓋紀錄)</h6>
+                <ul class="list-group mb-4 small">
+                    ${historyHtml}
+                </ul>
+                <h6 class="fw-bold text-primary mb-2"><i class="bi bi-cpu-fill"></i> 專責 Agent：${ind.ai_agent || '【AI 專案 Agent】'} 差異化介入方案</h6>
+                <div class="border rounded-3 p-3 bg-light text-dark small lh-lg">
+                    ${ind.trend_status === 'STAGNANT' ? 
+                        `<div class="text-danger fw-bold mb-2">⚠️ 警告：該指標前後期增減 (Δ ${deltaPct}%) 屬於未顯著增加（滯後指標），需重點輔導！</div>` : 
+                        `<div class="text-success fw-bold mb-2">🎉 轉移達成 / 成長良好 (Δ ${deltaPct}%)，持續保持！</div>`
+                    }
+                    <div><strong>改善對策：</strong>${ind.qualitative_desc || '持續推動檢核與管考。'}</div>
+                </div>
+            `;
+        }
+
+        function runAudit() {
+            fetch(`/api/audit?threshold=${currentThreshold}`)
+                .then(r => r.json())
+                .then(data => {
+                    let html = '<ul class="list-group list-group-flush">';
+                    if (data.length === 0) {
+                        html += '<li class="list-group-item text-success text-center py-3"><i class="bi bi-check-circle fs-4 d-block mb-1"></i>全表經智慧差異稽核皆無滯後與未達標問題！</li>';
+                    } else {
+                        data.forEach(d => {
+                            let badge = d.level === 'CRITICAL' ? 'bg-danger' : (d.level === 'WARNING' ? 'bg-warning text-dark' : 'bg-info');
+                            html += `<li class="list-group-item px-0 py-2 d-flex justify-content-between align-items-start gap-2">
+                                <div>
+                                    <strong class="small text-dark">[${d.id}] ${d.item} (${d.aspect})</strong>
+                                    <div class="small text-muted">${d.msg}</div>
+                                </div>
+                                <span class="badge ${badge}">${d.type}</span>
+                            </li>`;
+                        });
+                    }
+                    html += '</ul>';
+                    document.getElementById('audit-content').innerHTML = html;
+                });
+        }
+
+        // GitHub 模組前端控制函式
+        function openShareModal() {
+            fetch('/api/lan_info')
+                .then(r => r.json())
+                .then(data => {
+                    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(data.lan_url)}`;
+                    document.getElementById('share-qrcode-img').src = qrUrl;
+                    document.getElementById('share-lan-url-display').textContent = data.lan_url;
+                    
+                    const modal = new bootstrap.Modal(document.getElementById('shareModal'));
+                    modal.show();
+                });
+        }
+
+        function copyLanUrlFromModal() {
+            const lanUrl = document.getElementById('share-lan-url-display').textContent;
+            const msg = '🎉 已成功複製連線網址！\n\n' + lanUrl + '\n\n請將此網址發給他人電腦或手機輸入即可連線。';
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(lanUrl).then(() => {
+                    alert(msg);
+                });
+            } else {
+                alert(msg);
+            }
+        }
+
+        function openGithubModal() {
+            const modal = new bootstrap.Modal(document.getElementById('githubModal'));
+            modal.show();
+            refreshGithubModalStatus();
+        }
+
+        function refreshGithubModalStatus() {
+            const badge = document.getElementById('git-status-badge');
+            badge.className = 'badge bg-secondary';
+            badge.textContent = '檢查中...';
+            
+            fetch('/api/github/status')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.is_repo) {
+                        if (data.has_remote) {
+                            badge.className = 'badge bg-success';
+                            badge.textContent = '🟢 已連結 GitHub 遠端';
+                        } else {
+                            badge.className = 'badge bg-warning text-dark';
+                            badge.textContent = '🟡 已建立 Git 庫，尚未連結遠端 Repo';
+                        }
+                    } else {
+                        badge.className = 'badge bg-danger';
+                        badge.textContent = '🔴 未建立 Git 庫';
+                    }
+
+                    document.getElementById('git-branch-text').textContent = data.branch || 'main';
+                    document.getElementById('git-remote-text').textContent = data.remote_url || data.config_remote || '尚未設定';
+                    document.getElementById('git-uncommitted-text').textContent = data.has_changes ? `${data.uncommitted_files.length} 個檔案修訂待 commit` : '無待 commit 檔案';
+
+                    if (data.remote_url || data.config_remote) {
+                        document.getElementById('gh-remote-input').value = data.remote_url || data.config_remote;
+                    }
+                })
+                .catch(err => {
+                    badge.className = 'badge bg-danger';
+                    badge.textContent = '🔴 狀態連線異常';
+                });
+        }
+
+        function saveGithubConfigOnly() {
+            const remote_url = document.getElementById('gh-remote-input').value.trim();
+            const token = document.getElementById('gh-token-input').value.trim();
+            
+            fetch('/api/github/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ remote_url, token })
+            })
+            .then(r => r.json())
+            .then(res => {
+                const box = document.getElementById('github-output-box');
+                box.classList.remove('d-none', 'alert-danger');
+                box.className = 'alert alert-success small mb-0';
+                box.textContent = res.message || '設定已儲存！';
+                refreshGithubModalStatus();
+            });
+        }
+
+        function triggerGithubPush() {
+            const btn = document.getElementById('gh-push-btn');
+            const box = document.getElementById('github-output-box');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>同步上傳至 GitHub 中...';
+            
+            box.classList.remove('d-none');
+            box.className = 'alert alert-info small mb-0';
+            box.textContent = '正在執行 Git add, commit 與 push 上傳，請稍候...';
+
+            const remote_url = document.getElementById('gh-remote-input').value.trim();
+            const token = document.getElementById('gh-token-input').value.trim();
+            const commit_msg = document.getElementById('gh-msg-input').value.trim();
+
+            fetch('/api/github/push', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ remote_url, token, commit_msg })
+            })
+            .then(r => r.json())
+            .then(res => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-cloud-upload-fill"></i> 🚀 立即 Commit 並同步上傳至 GitHub';
+                
+                box.classList.remove('d-none');
+                if (res.success) {
+                    box.className = 'alert alert-success small mb-0';
+                    box.textContent = res.message;
+                    refreshGithubModalStatus();
+                } else {
+                    box.className = 'alert alert-danger small mb-0';
+                    box.innerHTML = '<strong>上傳提示/失敗：</strong><br>' + (res.message || '未知錯誤').split('\n').join('<br>');
+                }
+            })
+            .catch(err => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-cloud-upload-fill"></i> 🚀 領域 Commit 並同步上傳至 GitHub';
+                box.classList.remove('d-none');
+                box.className = 'alert alert-danger small mb-0';
+                box.textContent = '連線失敗: ' + err;
+            });
+        }
+    </script>
+</body>
+</html>
