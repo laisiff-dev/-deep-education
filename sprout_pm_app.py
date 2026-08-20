@@ -2539,6 +2539,16 @@ class SproutWebServer(http.server.SimpleHTTPRequestHandler):
             padding: 2px 6px;
             border-radius: 4px;
         }
+
+        /* 手機與行動裝置極致響應式微調 */
+        @media (max-width: 768px) {
+            .navbar-brand { font-size: 1.1rem !important; }
+            .navbar-brand div div { font-size: 0.85rem !important; }
+            .threshold-bar { padding: 15px; }
+            .card-custom { padding: 15px !important; }
+            .btn-group { flex-wrap: wrap; gap: 4px; }
+            .table-responsive { font-size: 0.85rem; }
+        }
     </style>
 </head>
 <body>
@@ -2554,8 +2564,8 @@ class SproutWebServer(http.server.SimpleHTTPRequestHandler):
                 </div>
             </a>
             <div class="ms-auto d-flex gap-2">
-                <button class="btn btn-info d-flex align-items-center gap-2 px-3 rounded-3 text-white fw-bold" onclick="copyLanUrl()" id="lan-btn" title="跨電腦/同區域網路連線網址">
-                    <i class="bi bi-laptop"></i> 🌐 複製他人電腦連線網址
+                <button class="btn btn-info d-flex align-items-center gap-2 px-3 rounded-3 text-white fw-bold" onclick="openShareModal()" id="lan-btn" title="跨電腦與手機連線及掃碼">
+                    <i class="bi bi-qr-code-scan"></i> 📱 跨電腦/手機連線 (QR Code 掃碼)
                 </button>
                 <button class="btn btn-warning d-flex align-items-center gap-2 px-3 rounded-3 text-dark fw-bold" onclick="openUploadModal()">
                     <i class="bi bi-cloud-arrow-up-fill"></i> 📤 上傳新期填報檔 (自動比較)
@@ -2674,6 +2684,47 @@ class SproutWebServer(http.server.SimpleHTTPRequestHandler):
             </div>
         </div>
 
+    </div>
+
+    <!-- 📱 跨手機與電腦連線 (QR Code 掃碼專區) Modal -->
+    <div class="modal fade" id="shareModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 shadow">
+                <div class="modal-header bg-gradient bg-primary text-white rounded-top-4 py-3">
+                    <h5 class="modal-title fw-bold d-flex align-items-center gap-2">
+                        <i class="bi bi-qr-code-scan fs-4"></i> 📱 跨電腦與手機連線 (QR Code 掃碼專區)
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 text-center">
+                    <p class="text-muted small mb-3">同仁使用<strong>智慧型手機 (iPhone / Android)</strong> 或<strong>其他電腦</strong>，皆可透過以下方式連線使用系統：</p>
+
+                    <!-- QR Code 展示區 -->
+                    <div class="bg-light p-3 rounded-4 border d-inline-block shadow-sm mb-3">
+                        <img id="share-qrcode-img" src="" alt="連線 QR Code" class="img-fluid rounded-3" style="width:200px; height:200px;">
+                    </div>
+                    <div class="fw-bold text-primary mb-3" id="share-lan-url-display">http://...</div>
+
+                    <div class="alert alert-info text-start small mb-3">
+                        <div class="fw-bold mb-1"><i class="bi bi-phone-fill me-1"></i> 手機連線方式：</div>
+                        1. 手機連接與本機相同的 <strong>Wi-Fi / 局域網</strong>。<br>
+                        2. 開啟手機相機或 LINE 掃瞄器，對準上方 <strong>QR Code</strong> 即可秒開啟系統。<br>
+                    </div>
+
+                    <div class="alert alert-secondary text-start small mb-0">
+                        <div class="fw-bold mb-1"><i class="bi bi-globe me-1"></i> 跨網域 / 行動網路 (4G/5G) 外網連線：</div>
+                        如需從家裡或外網連線，可於控制台執行以下命令開啟免費外網通道：<br>
+                        <code class="user-select-all bg-dark text-warning p-1 rounded d-block mt-1">npx localtunnel --port 8080</code>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0 justify-content-between">
+                    <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">關閉</button>
+                    <button type="button" class="btn btn-primary rounded-3 fw-bold" onclick="copyLanUrlFromModal()">
+                        <i class="bi bi-clipboard-check"></i> 複製連線網址
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- 📤 上傳 Excel Modal -->
@@ -3320,19 +3371,29 @@ class SproutWebServer(http.server.SimpleHTTPRequestHandler):
         }
 
         // GitHub 模組前端控制函式
-        function copyLanUrl() {
+        function openShareModal() {
             fetch('/api/lan_info')
                 .then(r => r.json())
                 .then(data => {
-                    const msg = `🎉 已成功複製跨電腦連線網址！\n\n網址：${data.lan_url}\n\n請將此網址複製發給同網域 (Wi-Fi/LAN) 之他人電腦輸入即可連線！`;
-                    if (navigator.clipboard) {
-                        navigator.clipboard.writeText(data.lan_url).then(() => {
-                            alert(msg);
-                        });
-                    } else {
-                        alert(msg);
-                    }
+                    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(data.lan_url)}`;
+                    document.getElementById('share-qrcode-img').src = qrUrl;
+                    document.getElementById('share-lan-url-display').textContent = data.lan_url;
+                    
+                    const modal = new bootstrap.Modal(document.getElementById('shareModal'));
+                    modal.show();
                 });
+        }
+
+        function copyLanUrlFromModal() {
+            const lanUrl = document.getElementById('share-lan-url-display').textContent;
+            const msg = '🎉 已成功複製連線網址！\\n\\n' + lanUrl + '\\n\\n請將此網址發給他人電腦或手機輸入即可連線。';
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(lanUrl).then(() => {
+                    alert(msg);
+                });
+            } else {
+                alert(msg);
+            }
         }
 
         function openGithubModal() {
