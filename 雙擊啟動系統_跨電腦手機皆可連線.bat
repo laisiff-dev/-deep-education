@@ -1,27 +1,27 @@
 @echo off
-chcp 65001 >nul
-title é«˜æ•™æ·±è€•æ™ºæ…§å°ˆæ¡ˆç®¡ç†èˆ‡æŒ‡æ¨™ç®¡è€ƒä¸­æ¨ž (è·¨é›»è…¦èˆ‡æ‰‹æ©Ÿé€£ç·šç‰ˆ)
+cd /d "%~dp0"
+title °ª±Ð²`¯Ñ´¼¼z±M®×ºÞ²z¤¤¼Ï (¸ó¹q¸£¤â¾÷³s½u)
 color 0A
 
 echo ====================================================================
-echo   ðŸ›ï¸ é«˜æ•™æ·±è€•æ™ºæ…§å°ˆæ¡ˆç®¡ç†èˆ‡æŒ‡æ¨™ç®¡è€ƒä¸­æ¨ž
-echo   æ­£åœ¨ç‚ºæ‚¨å•Ÿå‹•ç³»çµ±ï¼Œä¸¦è‡ªå‹•æª¢æ¸¬å±€åŸŸç¶² (LAN IP) è·¨é›»è…¦èˆ‡æ‰‹æ©Ÿé€£ç·šä½å€...
+echo   °ª±Ð²`¯Ñ´¼¼z±M®×ºÞ²z»P«ü¼ÐºÞ¦Ò¤¤¼Ï
+echo   ¥¿¦b¬°±z±Ò°Ê¦øªA¾¹¡A¨Ã¦Û°ÊÀË´ú§½°ìºô (LAN IP) ¸ó¹q¸£»P¤â¾÷³s½u¦ì§}...
 echo ====================================================================
 echo.
 
-rem æª¢æŸ¥ Python ç’°å¢ƒ
+rem ÀË¬d Python Àô¹Ò
 python --version >nul 2>&1
 if %errorlevel% neq 0 (
     color 0C
-    echo [éŒ¯èª¤] ç³»çµ±æœªæª¢æ¸¬åˆ° Python ç’°å¢ƒï¼è«‹å…ˆå®‰è£ Python 3.8+ ä¸¦å‹¾é¸ Add Python to PATHã€‚
+    echo [¿ù»~] ¨t²Î¥¼ÀË´ú¨ì Python Àô¹Ò¡I½Ð¥ý¦w¸Ë Python 3.8+ ¨Ã¤Ä¿ï Add Python to PATH¡C
     pause
     exit /b
 )
 
-rem è‡ªå‹•å˜—è©¦æ”¾è¡Œ Windows é˜²ç«ç‰† TCP 8080 Port
+rem ¹Á¸Õ©ñ¦æ¨¾¤õÀð Port 8080 (­YµLÅv­­«h¦Û°Ê©¿²¤)
 netsh advfirewall firewall add rule name="Sprout PM App (Port 8080)" dir=in action=allow protocol=TCP localport=8080 >nul 2>&1
 
-rem å•Ÿå‹• Python Web Server
+rem ±Ò°Ê Python Web Server
 python sprout_pm_app.py
 
 pause
