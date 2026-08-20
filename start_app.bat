@@ -5,7 +5,7 @@ color 0A
 
 echo ====================================================================
 echo   Sprout PM App Server Launcher
-echo   Starting server and detecting local LAN IP...
+echo   Starting server and launching web browser...
 echo ====================================================================
 echo.
 
@@ -17,5 +17,7 @@ if %errorlevel% neq 0 (
     exit /b
 )
 
+rem 自動啟動瀏覽器與 Python 服務
+start http://localhost:8080
 python sprout_pm_app.py
 pause

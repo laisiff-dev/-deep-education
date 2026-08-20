@@ -3520,7 +3520,7 @@ class ReusableHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
     allow_reuse_address = True
     daemon_threads = True
 
-def run_server(port=8080):
+def run_server(port=8080, open_browser=True):
     host = '0.0.0.0'
     lan_ip = get_lan_ip()
     for p in [port, 8081, 8085, 8090]:
@@ -3533,6 +3533,18 @@ def run_server(port=8080):
             print(f" [本機訪問 (Local IP)]     : http://127.0.0.1:{p}")
             print(f" [跨電腦/同網域訪問 (LAN)] : http://{lan_ip}:{p}  <-- 請他人電腦輸入此網址")
             print("============================================================")
+
+            # 自動開啟預設瀏覽器進入系統畫面
+            if open_browser:
+                def _pop_browser():
+                    import time, webbrowser
+                    time.sleep(0.8)
+                    try:
+                        webbrowser.open(f"http://localhost:{p}")
+                    except Exception:
+                        pass
+                threading.Thread(target=_pop_browser, daemon=True).start()
+
             httpd.serve_forever()
             break
         except OSError as e:
