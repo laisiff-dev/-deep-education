@@ -2289,6 +2289,13 @@ class SproutWebServer(http.server.SimpleHTTPRequestHandler):
             self.send_header('Content-Disposition', 'attachment; filename="sprout_indicators_history_report.csv"')
             self.end_headers()
             self.wfile.write(csv_data)
+        elif parsed.path == "/api/lan_info":
+            lan_ip = get_lan_ip()
+            port = self.server.server_address[1]
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json; charset=utf-8')
+            self.end_headers()
+            self.wfile.write(json.dumps({"lan_ip": lan_ip, "port": port, "lan_url": f"http://{lan_ip}:{port}"}, ensure_ascii=False).encode('utf-8'))
         elif parsed.path == "/api/github/status":
             st = check_git_status()
             cfg = load_config()
@@ -2547,6 +2554,9 @@ class SproutWebServer(http.server.SimpleHTTPRequestHandler):
                 </div>
             </a>
             <div class="ms-auto d-flex gap-2">
+                <button class="btn btn-info d-flex align-items-center gap-2 px-3 rounded-3 text-white fw-bold" onclick="copyLanUrl()" id="lan-btn" title="跨電腦/同區域網路連線網址">
+                    <i class="bi bi-laptop"></i> 🌐 複製他人電腦連線網址
+                </button>
                 <button class="btn btn-warning d-flex align-items-center gap-2 px-3 rounded-3 text-dark fw-bold" onclick="openUploadModal()">
                     <i class="bi bi-cloud-arrow-up-fill"></i> 📤 上傳新期填報檔 (自動比較)
                 </button>
@@ -3310,6 +3320,21 @@ class SproutWebServer(http.server.SimpleHTTPRequestHandler):
         }
 
         // GitHub 模組前端控制函式
+        function copyLanUrl() {
+            fetch('/api/lan_info')
+                .then(r => r.json())
+                .then(data => {
+                    const msg = `🎉 已成功複製跨電腦連線網址！\n\n網址：${data.lan_url}\n\n請將此網址複製發給同網域 (Wi-Fi/LAN) 之他人電腦輸入即可連線！`;
+                    if (navigator.clipboard) {
+                        navigator.clipboard.writeText(data.lan_url).then(() => {
+                            alert(msg);
+                        });
+                    } else {
+                        alert(msg);
+                    }
+                });
+        }
+
         function openGithubModal() {
             const modal = new bootstrap.Modal(document.getElementById('githubModal'));
             modal.show();
@@ -3417,17 +3442,36 @@ class SproutWebServer(http.server.SimpleHTTPRequestHandler):
 </html>
 """
 
+def get_lan_ip():
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(('8.8.8.8', 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception:
+        try:
+            return socket.gethostbyname(socket.gethostname())
+        except Exception:
+            return '127.0.0.1'
+
 class ReusableHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
     allow_reuse_address = True
     daemon_threads = True
 
 def run_server(port=8080):
     host = '0.0.0.0'
+    lan_ip = get_lan_ip()
     for p in [port, 8081, 8085, 8090]:
         try:
             httpd = ReusableHTTPServer((host, p), SproutWebServer)
-            print(f"[INFO] 高教深耕智慧專案管理系統 (前後差異分析版) 已成功啟動: http://localhost:{p}")
-            print(f"[INFO] 亦可開放訪問: http://127.0.0.1:{p}")
+            print("============================================================")
+            print("🏛️ 高教深耕智慧專案管理與指標管考中樞 已成功啟動！")
+            print("------------------------------------------------------------")
+            print(f" [本機訪問 (Local Host)]   : http://localhost:{p}")
+            print(f" [本機訪問 (Local IP)]     : http://127.0.0.1:{p}")
+            print(f" [跨電腦/同網域訪問 (LAN)] : http://{lan_ip}:{p}  <-- 請他人電腦輸入此網址")
+            print("============================================================")
             httpd.serve_forever()
             break
         except OSError as e:
