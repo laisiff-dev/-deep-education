@@ -1,29 +1,23 @@
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
 
-# Diagnostic data
-.antigravity
-.gemini
+# Windows system files
+Thumbs.db
+desktop.ini
+ehthumbs.db
+$RECYCLE.BIN/
 
-# Dependency directories
-node_modules/
-dist/
-dist-ssr/
-*.local
+# IDE & Editor settings
+.vscode/
+.idea/
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+# Local sensitive configuration (GitHub Token / credentials)
+github_config.json
+github_token.txt
+*.secret
+
+# Excel temporary lock files
+~$*
+
