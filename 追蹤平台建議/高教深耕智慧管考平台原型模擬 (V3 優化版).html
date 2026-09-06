@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>輔英科技大學 - 高教深耕追蹤平台智慧戰情室 (V3 進階互動版)</title>
+    <style>
+        /* 1. 莫蘭迪現代減壓色系與基礎配置 */
+        :root {
+            --bg-slate: #F1F5F9;
+            --bg-canvas: #F8FAFC;
+            --card-white: #FFFFFF;
+            --border-gray: #E2E8F0;
+            --text-main: #1E293B;
+            --text-muted: #64748B;
+            --blue-brand: #1E3A8A;
+            --blue-brand-light: #3B82F6;
+            
+            /* 三色狀態色 */
+            --green-bg: #D1FAE5;
+            --green-txt: #065F46;
+            --green-bar: #10B981;
+            
+            --yellow-bg: #FEF3C7;
+            --yellow-txt: #92400E;
+            --yellow-bar: #F59E0B;
+            
+            --red-bg: #FEE2E2;
+            --red-txt: #991B1B;
+            --red-bar: #EF4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", sans-serif;
+            background-color: var(--bg-slate);
+            color: var(--text-main);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* 頂部切換工具列 */
+        .preview-toolbar {
+            width: 100%;
+            max-width: 1280px;
+            background-color: #1E293B;
+            padding: 12px 20px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #FFFFFF;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .preview-toolbar h2 { font-size: 13px; font-weight: bold; letter-spacing: 0.5px; }
+        .preview-toolbar .tip { font-size: 11px; color: #94A3B8; }
+
+        /* 平板外殼框架 */
+        .tablet-shell {
+            width: 100%;
+            max-width: 1280px;
+            background-color: var(--card-white);
+            border: 12px solid #0F172A;
+            border-radius: 36px;
+            padding: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+            position: relative;
+            overflow: hidden;
+            min-height: 800px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 2. 戰情室頁頭 */
+        .system-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--border-gray);
+            padding-bottom: 16px;
+        }
+
+        .system-header .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .system-header h1 {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--blue-brand);
+        }
+
+        .system-header p {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: bold;
+            margin-top: 2px;
+        }
+
+        .system-header .meta-badge {
+            font-size: 11px;
+            background-color: #EEF2F6;
+            color: var(--text-muted);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        /* ================= 第一層：首頁大盤戰情視圖 ================= */
+        .tier-1-view {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .top-cards-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .overview-card {
+            background-color: var(--card-white);
+            border: 1px solid var(--border-gray);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.01);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .overview-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px rgba(0,0,0,0.03);
+            border-color: var(--blue-brand-light);
+        }
+
+        .overview-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 6px;
+            border-top-left-radius: 16px;
+            border-bottom-left-radius: 16px;
+        }
+
+        .overview-card.common::before { background-color: var(--blue-brand-light); }
+        .overview-card.custom::before { background-color: #10B981; }
+
+        .overview-card h3 {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+
+        .overview-card .card-val-row {
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .overview-card .big-num {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+
+        .overview-card .yoy-label {
+            font-size: 13px;
+            font-weight: 800;
+            color: var(--green-bar);
+        }
+
+        .status-capsules {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .capsule {
+            font-size: 11px;
+            font-weight: bold;
+            padding: 5px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: transform 0.1s ease;
+        }
+        .capsule:hover { transform: scale(1.05); }
+        .capsule.green { background-color: var(--green-bg); color: var(--green-txt); }
+        .capsule.yellow { background-color: var(--yellow-bg); color: var(--yellow-txt); }
+        .capsule.red { background-color: var(--red-bg); color: var(--red-txt); }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: bold;
+            color: var(--text-main);
+            margin-bottom: 10px;
+            border-left: 4px solid var(--blue-brand);
+            padding-left: 8px;
+        }
+
+        .stacked-panel {
+            background-color: var(--bg-canvas);
+            border: 1px solid var(--border-gray);
+            border-radius: 16px;
+            padding: 20px;
+        }
+
+        .stacked-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .stacked-row:last-child { margin-bottom: 0; }
+
+        .stacked-label {
+            width: 140px;
+            font-size: 12px;
+            font-weight: bold;
+            color: var(--text-main);
+        }
+
+        .stacked-bar-container {
+            flex-grow: 1;
+            height: 18px;
+            background-color: #E2E8F0;
+            border-radius: 4px;
+            overflow: hidden;
+            display: flex;
+            cursor: pointer;
+        }
+
+        .stacked-segment {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            color: #FFFFFF;
+            transition: opacity 0.2s;
+        }
+        .stacked-segment:hover { opacity: 0.85; }
+
+        .segment-green { background-color: var(--green-bar); }
+        .segment-yellow { background-color: var(--yellow-bar); }
+        .segment-red { background-color: var(--red-bar); }
+
+        /* ================= 第三層：依面向分組與檢視清單 ================= */
+        .tier-3-view {
+            display: none;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .tier-3-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .back-btn {
+            background-color: var(--blue-brand);
+            color: #FFFFFF;
+            border: none;
+            padding: 8px 16px;
+            font-size: 11px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background-color 0.2s;
+        }
+        .back-btn:hover { background-color: var(--blue-brand-light); }
+
+        .export-btn {
+            background-color: #059669;
+            color: #FFFFFF;
+            border: none;
+            padding: 8px 14px;
+            font-size: 11px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .export-btn:hover { background-color: #10B981; }
+
+        /* 增強：進階搜尋與條件過濾 Bar */
+        .filter-bar {
+            background-color: var(--bg-canvas);
+            border: 1px solid var(--border-gray);
+            border-radius: 10px;
+            padding: 10px 14px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-bar input, .filter-bar select {
+            padding: 6px 10px;
+            border: 1px solid var(--border-gray);
+            border-radius: 6px;
+            font-size: 11px;
+            outline: none;
+            background-color: #FFF;
+            color: var(--text-main);
+        }
+
+        .filter-bar input:focus, .filter-bar select:focus {
+            border-color: var(--blue-brand-light);
+        }
+
+        .dimension-group {
+            background-color: var(--bg-canvas);
+            border: 1px solid var(--border-gray);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+
+        .dimension-group-title {
+            font-size: 14px;
+            font-weight: 800;
+            color: var(--blue-brand);
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .dimension-group-title .badge {
+            font-size: 10px;
+            background-color: #E2E8F0;
+            color: var(--text-muted);
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        /* 改進：RWD 自適應強化的表格 Layout */
+        .table-responsive-wrapper {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .table-grid {
+            min-width: 860px;
+        }
+
+        .table-header {
+            display: grid;
+            grid-template-columns: minmax(90px, 0.8fr) minmax(220px, 2.5fr) minmax(80px, 0.8fr) minmax(80px, 0.8fr) minmax(140px, 1.5fr) minmax(80px, 0.8fr) minmax(100px, 1fr);
+            padding: 10px 12px;
+            background-color: #EEF2F6;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: bold;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .table-row {
+            display: grid;
+            grid-template-columns: minmax(90px, 0.8fr) minmax(220px, 2.5fr) minmax(80px, 0.8fr) minmax(80px, 0.8fr) minmax(140px, 1.5fr) minmax(80px, 0.8fr) minmax(100px, 1fr);
+            padding: 12px;
+            background-color: var(--card-white);
+            border: 1px solid var(--border-gray);
+            border-radius: 8px;
+            font-size: 12px;
+            margin-bottom: 8px;
+            align-items: center;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .table-row:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.03);
+            border-color: #CBD5E1;
+        }
+
+        .row-status-pill {
+            display: inline-block;
+            padding: 3px 6px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: bold;
+            text-align: center;
+            width: 76px;
+            margin: 0 auto;
+        }
+        .row-status-pill.red { background-color: var(--red-bg); color: var(--red-txt); }
+        .row-status-pill.yellow { background-color: var(--yellow-bg); color: var(--yellow-txt); }
+        .row-status-pill.green { background-color: var(--green-bg); color: var(--green-txt); }
+
+        .row-name-cell { text-align: left; padding-left: 10px; }
+        .row-name-cell .title { font-weight: bold; color: var(--text-main); margin-bottom: 2px; }
+        .row-name-cell .desc { font-size: 10px; color: var(--text-muted); }
+
+        .row-progress-container { display: flex; align-items: center; gap: 8px; }
+        .row-progress-bg { flex-grow: 1; height: 6px; background-color: #E2E8F0; border-radius: 9999px; overflow: hidden; }
+        .row-progress-fill { height: 100%; border-radius: 9999px; }
+
+        .row-action-btn {
+            padding: 5px 8px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            width: 85px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        .row-action-btn.red { background-color: var(--red-bg); color: var(--red-txt); }
+        .row-action-btn.yellow { background-color: var(--yellow-bg); color: var(--yellow-txt); }
+        .row-action-btn.green { background-color: var(--green-bg); color: var(--green-txt); }
+
+        /* ================= 第四層：數據立體履歷卡 Modal ================= */
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            border-radius: 24px;
+        }
+
+        .modal-box {
+            background-color: var(--bg-canvas);
+            width: 92%;
+            max-width: 960px;
+            max-height: 90vh;
+            overflow-y: auto;
+            border-radius: 20px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
+            animation: modalIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes modalIn {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-header {
+            background-color: #1E293B;
+            color: #FFFFFF;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            sticky: top;
+        }
+        .modal-header h2 { font-size: 15px; font-weight: 800; }
+        .modal-nav-btns { display: flex; gap: 8px; align-items: center; }
+        .modal-nav-btn {
+            background-color: #334155;
+            color: #FFF;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+        }
+        .modal-nav-btn:hover { background-color: var(--blue-brand-light); }
+        .modal-header .close-btn { background: none; border: none; font-size: 20px; color: #94A3B8; cursor: pointer; margin-left: 12px; }
+
+        .modal-body {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .modal-grid-1 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+        }
+
+        .modal-mini-card {
+            background-color: var(--card-white);
+            border: 1px solid var(--border-gray);
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+        }
+        .modal-mini-card .t { font-size: 11px; color: var(--text-muted); font-weight: bold; }
+        .modal-mini-card .v { font-size: 18px; font-weight: 800; margin-top: 4px; }
+
+        .modal-grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 16px;
+        }
+
+        .modal-section-card {
+            background-color: var(--card-white);
+            border: 1px solid var(--border-gray);
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .modal-section-card h4 {
+            font-size: 12px;
+            font-weight: bold;
+            color: var(--blue-brand);
+            margin-bottom: 12px;
+            border-left: 3px solid var(--blue-brand);
+            padding-left: 6px;
+        }
+
+        .coll-row { margin-bottom: 10px; }
+        .coll-info { display: flex; justify-content: space-between; font-size: 11px; font-weight: bold; margin-bottom: 4px; }
+        .coll-bar-bg { height: 6px; background-color: #E2E8F0; border-radius: 9999px; overflow: hidden; }
+        .coll-bar-fill { height: 100%; background-color: var(--blue-brand-light); border-radius: 9999px; }
+
+        .doc-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #F8FAFC;
+            border: 1px solid var(--border-gray);
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            font-size: 11px;
+        }
+        .doc-title { font-weight: bold; color: var(--text-main); }
+        .doc-meta { font-size: 9px; color: var(--text-muted); margin-top: 2px; }
+
+        .log-timeline { font-size: 11px; line-height: 1.6; }
+        .log-item { position: relative; padding-left: 14px; margin-bottom: 8px; }
+        .log-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 6px;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: var(--blue-brand-light);
+        }
+
+        .system-footer {
+            margin-top: auto;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-gray);
+            text-align: center;
+            font-size: 10px;
+            color: var(--text-muted);
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 頂部切換工具列 -->
+    <div class="preview-toolbar">
+        <h2>🏫 輔英科技大學 - 高教深耕智慧管考平台原型模擬 (V3 優化版)</h2>
+        <div class="tip">💡 互動指引：可點擊首頁「🚨 嚴重落後」膠囊直達篩選列表，或使用第三層頂部搜尋列精準定位指標。</div>
+    </div>
+
+    <!-- 平板模擬外殼 -->
+    <div class="tablet-shell">
+        
+        <!-- 戰情室頁頭 -->
+        <div class="system-header">
+            <div class="logo-area">
+                <div style="background-color: var(--blue-brand); color:#FFF; font-weight:900; padding:6px 10px; border-radius:8px; font-size:13px; letter-spacing: 0.5px;">輔英 IR</div>
+                <div>
+                    <h1>高教深耕計畫指標即時資料追蹤看板</h1>
+                    <p>元數據驅動 (Metadata-Driven) 例外管考架構</p>
+                </div>
+            </div>
+            <div class="meta-badge">114學年度結算 / 115年第2次填報</div>
+        </div>
+
+        <!-- ================= 第一層：首頁大盤戰情視圖 ================= -->
+        <div class="tier-1-view" id="tier-1-root">
+            
+            <div class="top-cards-row">
+                <!-- 🎯 共同績效指標卡 -->
+                <div class="overview-card common" onclick="goToTier3()">
+                    <h3 style="color: var(--blue-brand-light);">🎯 部定共同績效指標 (點擊進入完整清單)</h3>
+                    <div class="card-val-row">
+                        <span class="big-num">共 35 項</span>
+                        <span class="yoy-label">▲ +10.2% YoY</span>
+                    </div>
+                    <div class="status-capsules">
+                        <span class="capsule green" onclick="event.stopPropagation(); filterFromHome('green');">🟢 正常達標 25</span>
+                        <span class="capsule yellow" onclick="event.stopPropagation(); filterFromHome('yellow');">🟡 預警關注 6</span>
+                        <span class="capsule red" onclick="event.stopPropagation(); filterFromHome('red');">🚨 嚴重落後 4</span>
+                    </div>
+                </div>
+
+                <!-- 自訂績效指標卡 -->
+                <div class="overview-card custom" onclick="alert('自訂指標共 39 項。本模擬主要聚焦於部定共同指標的例外管考。請點擊左側卡片體驗。')">
+                    <h3>學校自訂績效指標</h3>
+                    <div class="card-val-row">
+                        <span class="big-num">共 39 項</span>
+                        <span class="yoy-label" style="color:var(--red-bar);">▼ -2.1% YoY</span>
+                    </div>
+                    <div class="status-capsules">
+                        <span class="capsule green">🟢 正常達標 28</span>
+                        <span class="capsule yellow">🟡 預警關注 5</span>
+                        <span class="capsule red">🚨 嚴重落後 6</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 100% 三色健康度堆疊條 -->
+            <div>
+                <div class="section-title">部定共同績效指標 － 面向健康度分布 (100%三色堆疊條)</div>
+                <div class="stacked-panel">
+                    <div class="stacked-row">
+                        <span class="stacked-label">教學創新精進 (18項)</span>
+                        <div class="stacked-bar-container" onclick="goToTier3()">
+                            <div class="stacked-segment segment-green" style="width: 72%;">72.0%</div>
+                            <div class="stacked-segment segment-yellow" style="width: 20%;">20.0%</div>
+                            <div class="stacked-segment segment-red" style="width: 8%;">8.0%</div>
+                        </div>
+                    </div>
+
+                    <div class="stacked-row">
+                        <span class="stacked-label">善盡社會責任 (4項)</span>
+                        <div class="stacked-bar-container" onclick="goToTier3()">
+                            <div class="stacked-segment segment-green" style="width: 75%;">75.0%</div>
+                            <div class="stacked-segment segment-yellow" style="width: 25%;">25.0%</div>
+                        </div>
+                    </div>
+
+                    <div class="stacked-row">
+                        <span class="stacked-label">產學合作連結 (12項)</span>
+                        <div class="stacked-bar-container" onclick="goToTier3()">
+                            <div class="stacked-segment segment-green" style="width: 66.7%;">66.7%</div>
+                            <div class="stacked-segment segment-yellow" style="width: 25%;">25.0%</div>
+                            <div class="stacked-segment segment-red" style="width: 8.3%;">8.3%</div>
+                        </div>
+                    </div>
+
+                    <div class="stacked-row">
+                        <span class="stacked-label">提升高教公共性 (1項)</span>
+                        <div class="stacked-bar-container" onclick="goToTier3()">
+                            <div class="stacked-segment segment-green" style="width: 100%;">100%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= 第三層：依面向分組與優先級排序清單視圖 ================= -->
+        <div class="tier-3-view" id="tier-3-root">
+            
+            <div class="tier-3-toolbar">
+                <button class="back-btn" onclick="goToHome()">⬅ 返回首頁大盤</button>
+                <div style="display:flex; gap:8px;">
+                    <button class="export-btn" onclick="alert('已成功匯出「高教深耕主管會報管考摘要 (PDF)」！')">📄 匯出會報摘要</button>
+                </div>
+            </div>
+
+            <!-- 新增：多功能動態篩選列 -->
+            <div class="filter-bar">
+                <span style="font-size:11px; font-weight:bold; color:var(--text-muted);">快速篩選：</span>
+                <input type="text" id="search-input" placeholder="搜尋指標代碼或關鍵字..." oninput="applyFilters()">
+                <select id="dept-select" onchange="applyFilters()">
+                    <option value="all">所有主責單位</option>
+                    <option value="教務處">教務處</option>
+                    <option value="學務處">學務處</option>
+                    <option value="研發處">研發處</option>
+                    <option value="共同教育中心">共同教育中心</option>
+                </select>
+                <select id="status-select" onchange="applyFilters()">
+                    <option value="all">所有狀態 (預設落後優先)</option>
+                    <option value="red">🚨 嚴重落後</option>
+                    <option value="yellow">⚠️ 預警關注</option>
+                    <option value="green">🟢 正常達標</option>
+                </select>
+            </div>
+
+            <div class="table-responsive-wrapper">
+                <div class="table-grid">
+                    
+                    <!-- 修正錯別字：面向一 -->
+                    <div class="dimension-group">
+                        <div class="dimension-group-title">
+                            <span>面向一：教學創新精進</span>
+                            <span class="badge">共 18 項指標</span>
+                        </div>
+
+                        <div class="table-header">
+                            <div>管考狀態</div>
+                            <div style="text-align: left; padding-left: 10px;">指標項目與衡量子項目 (例外優先)</div>
+                            <div>當年目標</div>
+                            <div>當前實績</div>
+                            <div style="text-align: left;">當期達成率與進度條</div>
+                            <div>YoY 同期比</div>
+                            <div>管理動作</div>
+                        </div>
+
+                        <!-- 指標列表項目 (附帶動態過濾 data- 屬性) -->
+                        <div class="table-row" data-status="red" data-dept="教務處" onclick="alert('指標代碼: COM_035\n主責單位: 教務處課註組\n已觸發「任務 B」強制填報 300字原因與改善措施。')">
+                            <div><span class="row-status-pill red">🚨 嚴重落後</span></div>
+                            <div class="row-name-cell">
+                                <div class="title">採用創新教學模式教師數 (COM_035)</div>
+                                <div class="desc">教務處課註組 | 實施6週以上翻轉/PBL教學之專任教師人數 (表3-5)</div>
+                            </div>
+                            <div style="text-align: center; font-weight: bold;">400 人</div>
+                            <div style="text-align: center; font-weight: bold; color: var(--red-txt);">131 人</div>
+                            <div class="row-progress-container">
+                                <div class="row-progress-bg"><div class="row-progress-fill" style="width: 32.75%; background-color: var(--red-bar);"></div></div>
+                                <span style="font-weight: bold; color: var(--red-txt);">32.75%</span>
+                            </div>
+                            <div class="yoy-down" style="text-align: center; font-weight: bold; color:var(--red-bar);">▼ -12.4%</div>
+                            <div><button class="row-action-btn red">📝 審查檢討</button></div>
+                        </div>
+
+                        <div class="table-row" data-status="red" data-dept="學務處" onclick="alert('指標代碼: COM_002\n主責單位: 學務處課指組\n已啟動「任務 A」教育部官方對帳機制。')">
+                            <div><span class="row-status-pill red">🚨 嚴重落後</span></div>
+                            <div class="row-name-cell">
+                                <div class="title">學生參加競賽獲獎人次 (COM_002)</div>
+                                <div class="desc">學務處課指組 | 教育部或中央部會採認競賽前三名人次 (已去重) (表4-8-1)</div>
+                            </div>
+                            <div style="text-align: center; font-weight: bold;">2,250人次</div>
+                            <div style="text-align: center; font-weight: bold; color: var(--red-txt);">154 人次</div>
+                            <div class="row-progress-container">
+                                <div class="row-progress-bg"><div class="row-progress-fill" style="width: 6.84%; background-color: var(--red-bar);"></div></div>
+                                <span style="font-weight: bold; color: var(--red-txt);">6.84%</span>
+                            </div>
+                            <div class="yoy-down" style="text-align: center; font-weight: bold; color:var(--red-bar);">▼ -45.2%</div>
+                            <div><button class="row-action-btn red">📂 去重對帳</button></div>
+                        </div>
+
+                        <div class="table-row" data-status="red" data-dept="共同教育中心" onclick="alert('指標代碼: COM_024\n主責單位: 共同教育中心\n達成率: 33.33%')">
+                            <div><span class="row-status-pill red">🚨 嚴重落後</span></div>
+                            <div class="row-name-cell">
+                                <div class="title">學生英文證照通過張數 - B2 等級 (COM_024)</div>
+                                <div class="desc">共同教育中心 | 通過 CEFR 英文證照 B2 檢定累計張數 (表4-8-3)</div>
+                            </div>
+                            <div style="text-align: center; font-weight: bold;">3 張</div>
+                            <div style="text-align: center; font-weight: bold; color: var(--red-txt);">1 張</div>
+                            <div class="row-progress-container">
+                                <div class="row-progress-bg"><div class="row-progress-fill" style="width: 33.33%; background-color: var(--red-bar);"></div></div>
+                                <span style="font-weight: bold; color: var(--red-txt);">33.33%</span>
+                            </div>
+                            <div class="yoy-down" style="text-align: center; font-weight: bold; color:var(--red-bar);">▼ -66.7%</div>
+                            <div><button class="row-action-btn red">📝 審查檢討</button></div>
+                        </div>
+
+                        <div class="table-row" data-status="yellow" data-dept="共同教育中心" onclick="alert('指標代碼: COM_021\n當前處於預警黃燈')">
+                            <div><span class="row-status-pill yellow">⚠️ 預警關注</span></div>
+                            <div class="row-name-cell">
+                                <div class="title">學生英文證照通過張數 - A1 等級 (COM_021)</div>
+                                <div class="desc">共同教育中心 | 通過 CEFR 英文證照 A1 檢定累計張數 (表4-8-3)</div>
+                            </div>
+                            <div style="text-align: center; font-weight: bold;">314 張</div>
+                            <div style="text-align: center; font-weight: bold; color: var(--yellow-txt);">280 張</div>
+                            <div class="row-progress-container">
+                                <div class="row-progress-bg"><div class="row-progress-fill" style="width: 89.17%; background-color: var(--yellow-bar);"></div></div>
+                                <span style="font-weight: bold; color: var(--yellow-txt);">89.17%</span>
+                            </div>
+                            <div class="yoy-up" style="text-align: center; font-weight: bold; color:var(--green-bar);">▲ +4.2%</div>
+                            <div><button class="row-action-btn yellow">💬 留言追蹤</button></div>
+                        </div>
+
+                        <!-- 🟢 點擊展開第四層 Modal -->
+                        <div class="table-row" data-status="green" data-dept="教務處" style="background-color: #F0FDF4; border: 1.5px solid #86EFAC;" onclick="openModal('COM_014')">
+                            <div><span class="row-status-pill green">🟢 正常達標</span></div>
+                            <div class="row-name-cell">
+                                <div class="title" style="color: var(--blue-brand); text-decoration: underline;">學生通過證照數人次 (COM_014) - 🔍 點擊展開第四層履歷卡</div>
+                                <div class="desc">教務處學生組 | 考取核心專業證照累計通過人次 (表4-8-2)</div>
+                            </div>
+                            <div style="text-align: center; font-weight: bold;">1,450人次</div>
+                            <div style="text-align: center; font-weight: bold; color: var(--green-txt);">1,375人次</div>
+                            <div class="row-progress-container">
+                                <div class="row-progress-bg"><div class="row-progress-fill" style="width: 94.83%; background-color: var(--green-bar);"></div></div>
+                                <span style="font-weight: bold; color: var(--green-txt);">94.83%</span>
+                            </div>
+                            <div class="yoy-up" style="text-align: center; font-weight: bold; color:var(--green-bar);">▲ +10.1%</div>
+                            <div><button class="row-action-btn green" onclick="event.stopPropagation(); openModal('COM_014');">✔️ 核章鎖定</button></div>
+                        </div>
+                    </div>
+
+                    <!-- 面向二 -->
+                    <div class="dimension-group">
+                        <div class="dimension-group-title">
+                            <span>面向二：善盡社會責任</span>
+                            <span class="badge">共 4 項指標</span>
+                        </div>
+                        <div class="table-row" data-status="yellow" data-dept="學務處" onclick="alert('指標代碼: USR_COM_002')">
+                            <div><span class="row-status-pill yellow">⚠️ 預警關注</span></div>
+                            <div class="row-name-cell">
+                                <div class="title">參與SDGs、USR相關師生社群社團參與人次</div>
+                                <div class="desc">跨單位自動彙總：教務處+研發處+學務處</div>
+                            </div>
+                            <div style="text-align: center; font-weight: bold;">950 人次</div>
+                            <div style="text-align: center; font-weight: bold; color: var(--yellow-txt);">809 人次</div>
+                            <div class="row-progress-container">
+                                <div class="row-progress-bg"><div class="row-progress-fill" style="width: 85.15%; background-color: var(--yellow-bar);"></div></div>
+                                <span style="font-weight: bold; color: var(--yellow-txt);">85.15%</span>
+                            </div>
+                            <div class="yoy-up" style="text-align: center; font-weight: bold; color:var(--green-bar);">▲ +3.4%</div>
+                            <div><button class="row-action-btn yellow">💬 留言追蹤</button></div>
+                        </div>
+                    </div>
+
+                    <!-- 面向三 -->
+                    <div class="dimension-group">
+                        <div class="dimension-group-title">
+                            <span>面向三：產學合作連結</span>
+                            <span class="badge">共 12 項指標</span>
+                        </div>
+                        <div class="table-row" data-status="green" data-dept="研發處" onclick="alert('指標代碼: IA_COM_001')">
+                            <div><span class="row-status-pill green">🟢 正常達標</span></div>
+                            <div class="row-name-cell">
+                                <div class="title">產學合作策略聯盟家數</div>
+                                <div class="desc">研發處 | 雙方簽署策略聯盟合作備忘錄累積家數</div>
+                            </div>
+                            <div style="text-align: center; font-weight: bold;">120 家</div>
+                            <div style="text-align: center; font-weight: bold; color: var(--green-txt);">121 家</div>
+                            <div class="row-progress-container">
+                                <div class="row-progress-bg"><div class="row-progress-fill" style="width: 100%; background-color: var(--green-bar);"></div></div>
+                                <span style="font-weight: bold; color: var(--green-txt);">100.8%</span>
+                            </div>
+                            <div class="yoy-up" style="text-align: center; font-weight: bold; color:var(--green-bar);">▲ +8.2%</div>
+                            <div><button class="row-action-btn green">✔️ 核章鎖定</button></div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 共同頁尾 -->
+        <div class="system-footer">
+            © 輔英科技大學 Fooyin University - 高教深耕計畫管考辦公室 (智慧戰情發包規格原型 V3 改版)
+        </div>
+
+        <!-- ================= 第四層：單項數據立體履歷卡 Modal ================= -->
+        <div class="modal-overlay" id="modal-root">
+            <div class="modal-box">
+                <div class="modal-header">
+                    <div>
+                        <h2>COM_014: 學生通過證照數人次 (智慧數據履歷卡)</h2>
+                        <p style="font-size:11px; color:#94A3B8;">部定共同績效指標 • 主責單位：教務處學生組 • 數據來源：校基庫 表 4-8-2</p>
+                    </div>
+                    <div class="modal-nav-btns">
+                        <button class="modal-nav-btn" onclick="alert('切換至上一項指標：COM_021')">◀ 上一項</button>
+                        <button class="modal-nav-btn" onclick="alert('切換至下一項指標：USR_COM_002')">下一項 ▶</button>
+                        <button class="close-btn" onclick="closeModal()">✕</button>
+                    </div>
+                </div>
+                <div class="modal-body">
+                    
+                    <div class="modal-grid-1">
+                        <div class="modal-mini-card">
+                            <div class="t">🎯 114學年度目標值</div>
+                            <div class="v" style="color: var(--text-main);">1,450 人次</div>
+                        </div>
+                        <div class="modal-mini-card">
+                            <div class="t">📊 教育部官方核定值</div>
+                            <div class="v" style="color: var(--blue-brand-light);">1,375 人次</div>
+                        </div>
+                        <div class="modal-mini-card" style="background-color: var(--green-bg);">
+                            <div class="t" style="color: var(--green-txt);">🟢 目前達成率</div>
+                            <div class="v" style="color: var(--green-txt);">94.83%</div>
+                        </div>
+                        <div class="modal-mini-card">
+                            <div class="t">⚖️ YoY 去年同期比</div>
+                            <div class="v" style="color: var(--green-txt);">▲ +10.18%</div>
+                        </div>
+                    </div>
+
+                    <div class="modal-grid-2">
+                        <!-- 系科貢獻 -->
+                        <div class="modal-section-card">
+                            <h4>全校 1,375 人次數據貢獻與溯源</h4>
+                            <div class="coll-row">
+                                <div class="coll-info"><span>護理學院</span><span>654 人次 (47.5%)</span></div>
+                                <div class="coll-bar-bg"><div class="coll-bar-fill" style="width: 47.5%;"></div></div>
+                            </div>
+                            <div class="coll-row">
+                                <div class="coll-info"><span>醫事健康學院</span><span>412 人次 (30.0%)</span></div>
+                                <div class="coll-bar-bg"><div class="coll-bar-fill" style="width: 30.0%;"></div></div>
+                            </div>
+                            <div class="coll-row">
+                                <div class="coll-info"><span>環境與生命科學院</span><span>189 人次 (13.7%)</span></div>
+                                <div class="coll-bar-bg"><div class="coll-bar-fill" style="width: 13.7%;"></div></div>
+                            </div>
+                            <div class="coll-row">
+                                <div class="coll-info"><span>人文管理學院</span><span>120 人次 (8.8%)</span></div>
+                                <div class="coll-bar-bg"><div class="coll-bar-fill" style="width: 8.8%;"></div></div>
+                            </div>
+                        </div>
+
+                        <!-- 佐證與簽核 -->
+                        <div class="modal-section-card">
+                            <h4>簽核佐證 (免維護主管線上帳號)</h4>
+                            <div class="doc-item">
+                                <div>
+                                    <div class="doc-title">📥 COM_014_證照採計明細_教務處.xlsx</div>
+                                    <div class="doc-meta">已由系統後台排除學號與證照重複 | 1.2 MB</div>
+                                </div>
+                                <span style="color: var(--blue-brand-light); font-weight: bold; cursor: pointer;" onclick="alert('開始下載 Excel 明細！')">下載</span>
+                            </div>
+
+                            <div class="doc-item">
+                                <div>
+                                    <div class="doc-title">🔍 處室一級主管簽章審查總表.pdf</div>
+                                    <div class="doc-meta">教務長線下實體核章掃描回傳檔 | 狀態: 唯讀鎖定</div>
+                                </div>
+                                <span style="color: var(--blue-brand-light); font-weight: bold; cursor: pointer;" onclick="alert('即將預覽核章掃描檔案！')">預覽</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-grid-2">
+                        <div class="modal-section-card">
+                            <h4>日常推動具體成果 (質性描述，限制300字)</h4>
+                            <div style="font-size: 11px; color:#475569; line-height:1.6;">
+                                為培養學生專業實務能力，藉由系科專業證照盤點，聚焦核心證照及分級獎勵制度，驅動學生超越自我、挑戰自我與進階發展，並由各系提出學生專業證照輔導班計畫，輔導學生考取證照，以提升學生考照率及未來就業競爭力。
+                            </div>
+                        </div>
+
+                        <div class="modal-section-card">
+                            <h4>系統管考與對帳稽核日誌 (Audit Trail)</h4>
+                            <div class="log-timeline">
+                                <div class="log-item"><b>2026/10/12</b> - 承辦人張專員完成日常填報數據累加暫存。</div>
+                                <div class="log-item"><b>2026/10/15</b> - 教育部官方核定值 1,375 下發，系統自動覆蓋並鎖定唯讀。</div>
+                                <div class="log-item"><b>2026/11/05</b> - 承辦人上傳主管核章掃描檔，平台正式送出，當期唯讀封存。</div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- JS 控制邏輯 -->
+    <script>
+        // 切換首頁與第三層
+        function goToTier3() {
+            document.getElementById('tier-1-root').style.display = 'none';
+            document.getElementById('tier-3-root').style.display = 'flex';
+        }
+
+        function goToHome() {
+            document.getElementById('tier-1-root').style.display = 'flex';
+            document.getElementById('tier-3-root').style.display = 'none';
+        }
+
+        // 首頁膠囊直達篩選
+        function filterFromHome(status) {
+            goToTier3();
+            document.getElementById('status-select').value = status;
+            applyFilters();
+        }
+
+        // 第三層多條件動態過濾
+        function applyFilters() {
+            const searchVal = document.getElementById('search-input').value.toLowerCase();
+            const deptVal = document.getElementById('dept-select').value;
+            const statusVal = document.getElementById('status-select').value;
+
+            const rows = document.querySelectorAll('.table-row');
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                const dept = row.getAttribute('data-dept');
+                const status = row.getAttribute('data-status');
+
+                const matchSearch = text.includes(searchVal);
+                const matchDept = (deptVal === 'all' || dept === deptVal);
+                const matchStatus = (statusVal === 'all' || status === statusVal);
+
+                if (matchSearch && matchDept && matchStatus) {
+                    row.style.display = 'grid';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        // 第四層 Modal 控制
+        function openModal(id) {
+            if (id === 'COM_014') {
+                document.getElementById('modal-root').style.display = 'flex';
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('modal-root').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

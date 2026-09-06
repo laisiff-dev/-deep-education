@@ -18,6 +18,10 @@ github_config.json
 github_token.txt
 *.secret
 
+# Node dependencies & build artifacts
+node_modules/
+dist/
+
 # Excel temporary lock files
 ~$*
 

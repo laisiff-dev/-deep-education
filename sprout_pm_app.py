@@ -2020,7 +2020,6 @@ INDICATORS_DB = [
         ]
     }
 ]
-
 def parse_num_clean(val):
     if val is None: return None
     s = str(val).strip()
@@ -2210,7 +2209,6 @@ def parse_excel_and_merge_history(wb, period_label="最新填報期"):
                 item_full = f"{col1} - {col3}" if col1 else col3
                 process_item(item_full, current_aspect, col2, val_str, desc_str, True, ann_targets, ann_actuals, ann_rates, dept_str)
 
-    # 4. 前後期比較邏輯修正：比對最新 (Latest) 與 次新 (Second Latest) 資料
     for ind in INDICATORS_DB:
         rates = ind.get('annual_rates', {})
         valid_years = [y for y in ['111', '112', '113', '114'] if rates.get(y) is not None]
@@ -2233,7 +2231,6 @@ def parse_excel_and_merge_history(wb, period_label="最新填報期"):
             
         delta = round(latest_rate - prev_rate, 4) if (latest_rate is not None and prev_rate is not None) else 0.0
         
-        # 判定趨勢狀態
         if latest_rate >= 0.85 and prev_rate < 0.85:
             trend_status = "PROGRESS_MET"
         elif delta >= 0.05:
@@ -2272,11 +2269,11 @@ class SproutWebServer(http.server.SimpleHTTPRequestHandler):
             self.send_header('Content-type', 'text/html; charset=utf-8')
             self.end_headers()
             self.wfile.write(self.render_html_dashboard().encode('utf-8'))
-        elif parsed.path == "/api/indicators":
+        elif parsed.path in ["/api/indicators", "/api/v5/indicators"]:
             self.send_response(200)
             self.send_header('Content-type', 'application/json; charset=utf-8')
             self.end_headers()
-            self.wfile.write(json.dumps(INDICATORS_DB, ensure_ascii=False).encode('utf-8'))
+            self.wfile.write(json.dumps({"indicators": INDICATORS_DB}, ensure_ascii=False).encode('utf-8'))
         elif parsed.path == "/api/audit":
             query = urllib.parse.parse_qs(parsed.query)
             threshold = float(query.get("threshold", [0.70])[0])
@@ -2321,7 +2318,6 @@ class SproutWebServer(http.server.SimpleHTTPRequestHandler):
                 wb = openpyxl.load_workbook(io.BytesIO(body_bytes), data_only=True)
                 new_db = parse_excel_and_merge_history(wb, period_label=period_name)
 
-                # 備份最新上傳檔案
                 try:
                     with open(f"第二期高教深耕計畫指標-上傳紀錄_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx", "wb") as f:
                         f.write(body_bytes)
@@ -2439,7 +2435,7 @@ class SproutWebServer(http.server.SimpleHTTPRequestHandler):
 
     def generate_csv_report(self):
         output = io.StringIO()
-        output.write('\ufeff') # UTF-8 BOM
+        output.write('\ufeff')
         writer = csv.writer(output)
         writer.writerow(["指標代碼", "指標類別", "構面名稱", "指標項目", "主責處室", "前期達成率", "最新達成率", "差異增減(Δ)", "差異趨勢分類", "115-2實績描述", "質化說明與未達標檢討", "AI Agent 處方對策"])
         for ind in INDICATORS_DB:
@@ -2454,609 +2450,12 @@ class SproutWebServer(http.server.SimpleHTTPRequestHandler):
         return output.getvalue().encode('utf-8-sig')
 
     def render_html_dashboard(self):
-        db_json = json.dumps(INDICATORS_DB, ensure_ascii=False)
-        html_content = """<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>高教深耕計畫「智慧專案管理與指標管考系統」 (前後期歷史差異化比較版)</title>
-    <!-- Bootstrap 5 & Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-    <!-- Google Fonts & Chart.js -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        :root {
-            --bg-main: #f8fafc;
-            --card-bg: #ffffff;
-            --primary-accent: #2563eb;
-            --dark-text: #0f172a;
-            --border-color: #e2e8f0;
-        }
-        body {
-            background-color: var(--bg-main);
-            font-family: 'Plus Jakarta Sans', 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
-            color: var(--dark-text);
-            padding-bottom: 60px;
-        }
-        .navbar-custom {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-        }
-        
-        /* 門檻控制列專用樣式 */
-        .threshold-bar {
-            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
-            color: white;
-            border-radius: 16px;
-            padding: 20px 24px;
-            box-shadow: 0 10px 25px rgba(49, 46, 129, 0.15);
-            margin-bottom: 24px;
-        }
-        .threshold-slider {
-            accent-color: #818cf8;
-            height: 8px;
-        }
-        
-        .card-custom {
-            background: var(--card-bg);
-            border-radius: 16px;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
-            margin-bottom: 24px;
-        }
-        .table-hover tbody tr:hover {
-            background-color: #f8fafc;
-        }
-        .tr-unmet {
-            background-color: #fef2f2 !important;
-        }
-        .tr-progress {
-            background-color: #f0fdf4 !important;
-        }
-        .tr-stagnant {
-            background-color: #fffbeb !important;
-        }
-        .badge-agent {
-            background-color: #f3e8ff;
-            color: #6b21a8;
-            font-weight: 600;
-            padding: 4px 8px;
-            border-radius: 6px;
-            border: 1px solid #d8b4fe;
-            font-size: 0.8rem;
-        }
-        .progress {
-            height: 10px;
-            border-radius: 6px;
-            background-color: #e2e8f0;
-        }
-        .progress-bar {
-            border-radius: 6px;
-        }
-        .delta-pill {
-            font-size: 0.75rem;
-            font-weight: 700;
-            padding: 2px 6px;
-            border-radius: 4px;
-        }
+        index_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "index.html")
+        if os.path.exists(index_path):
+            with open(index_path, "r", encoding="utf-8") as f:
+                return f.read()
+        return "<h1>index.html Not Found</h1>"
 
-        /* 手機與行動裝置極致響應式微調 */
-        @media (max-width: 768px) {
-            .navbar-brand { font-size: 1.1rem !important; }
-            .navbar-brand div div { font-size: 0.85rem !important; }
-            .threshold-bar { padding: 15px; }
-            .card-custom { padding: 15px !important; }
-            .btn-group { flex-wrap: wrap; gap: 4px; }
-            .table-responsive { font-size: 0.85rem; }
-        }
-    </style>
-</head>
-<body>
-
-    <!-- 頂部導覽列 -->
-    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom py-3 mb-4">
-        <div class="container-fluid px-4">
-            <a class="navbar-brand d-flex align-items-center fw-bold fs-4" href="#">
-                <span class="fs-2 me-2">🏛️</span>
-                <div>
-                    <div>高教深耕計畫「智慧專案管理與指標管考中樞」</div>
-                    <div class="fs-6 text-info fw-normal">前後期指標差異化分析 (非覆蓋模式・追蹤轉移達成與滯後未顯著增加)</div>
-                </div>
-            </a>
-            <div class="ms-auto d-flex gap-2">
-                <button class="btn btn-info d-flex align-items-center gap-2 px-3 rounded-3 text-white fw-bold" onclick="openShareModal()" id="lan-btn" title="跨電腦與手機連線及掃碼">
-                    <i class="bi bi-qr-code-scan"></i> 📱 跨電腦/手機連線 (QR Code 掃碼)
-                </button>
-                <button class="btn btn-warning d-flex align-items-center gap-2 px-3 rounded-3 text-dark fw-bold" onclick="openUploadModal()">
-                    <i class="bi bi-cloud-arrow-up-fill"></i> 📤 上傳新期填報檔 (自動比較)
-                </button>
-                <button class="btn btn-outline-info d-flex align-items-center gap-2 px-3 rounded-3 text-white fw-bold" onclick="openGithubModal()">
-                    <i class="bi bi-github"></i> ☁️ 同步至 GitHub
-                </button>
-                <button class="btn btn-outline-light d-flex align-items-center gap-2 px-3 rounded-3" onclick="runAudit()">
-                    <i class="bi bi-shield-check text-warning"></i> 執行全表差異稽核
-                </button>
-                <a class="btn btn-success d-flex align-items-center gap-2 px-3 rounded-3" href="/api/export">
-                    <i class="bi bi-file-earmark-spreadsheet"></i> 匯出差異比較報表
-                </a>
-            </div>
-        </div>
-    </nav>
-
-    <div class="container-fluid px-4">
-        
-        <!-- 🎯 控制中樞：門檻 slider 與差異化過濾按鈕群 -->
-        <div class="threshold-bar">
-            <div class="row align-items-center g-3">
-                <div class="col-lg-4">
-                    <div class="d-flex align-items-center gap-2 mb-1">
-                        <i class="bi bi-sliders fs-4 text-warning"></i>
-                        <h5 class="fw-bold m-0">🎯 可調整達成率檢視門檻</h5>
-                    </div>
-                    <div class="small" style="color: #c7d2fe;">設定達成率判定門檻（預設 70%），即時比對前後期達成率消長趨勢。</div>
-                </div>
-                <div class="col-lg-3">
-                    <div class="d-flex align-items-center gap-3">
-                        <input type="range" class="form-range threshold-slider flex-grow-1" id="threshold-range" min="0" max="100" step="5" value="70" oninput="syncThresholdInput(this.value)">
-                        <div class="input-group input-group-sm" style="width: 90px;">
-                            <input type="number" class="form-control fw-bold text-center text-primary" id="threshold-number" min="0" max="100" value="70" onchange="syncThresholdSlider(this.value)">
-                            <span class="input-group-text bg-white fw-bold">%</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-5 text-lg-end">
-                    <div class="btn-group btn-group-sm" role="group" id="delta-filter-group">
-                        <button type="button" class="btn btn-outline-light active" onclick="setDeltaFilter('ALL')">全部 62 項</button>
-                        <button type="button" class="btn btn-outline-success" onclick="setDeltaFilter('PROGRESS')">🎉 轉移達成 / 顯著進步 (<span id="cnt-progress">0</span>)</button>
-                        <button type="button" class="btn btn-outline-warning" onclick="setDeltaFilter('STAGNANT')">⚠️ 未顯著增加 / 滯後 (<span id="cnt-stagnant">0</span>)</button>
-                        <button type="button" class="btn btn-outline-danger" onclick="setDeltaFilter('UNMET')">🔴 未達標 (&lt;<span id="summary-threshold-val">70</span>%)</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 📊 四大動態統計卡片：呈現轉移達成與未顯著增加趨勢 -->
-        <div class="row g-3 mb-4" id="trend-summary-cards">
-            <!-- JavaScript 動態繪製總覽統計卡片 -->
-        </div>
-
-        <!-- 搜尋與過濾 Bar -->
-        <div class="row g-2 mb-3 bg-white p-3 rounded-4 border shadow-sm align-items-center">
-            <div class="col-md-4">
-                <div class="input-group input-group-sm">
-                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
-                    <input type="text" id="search-input" class="form-control form-control-sm" placeholder="搜尋指標名稱/代碼/處室..." oninput="refreshDashboard()">
-                </div>
-            </div>
-            <div class="col-md-3">
-                <select id="category-filter" class="form-select form-select-sm" onchange="refreshDashboard()">
-                    <option value="">所有指標類別 (共同指標 + 自訂指標)</option>
-                    <option value="共同指標">共同指標 (教育部指定)</option>
-                    <option value="自訂指標">自訂指標 (學校自訂)</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <select id="aspect-filter" class="form-select form-select-sm" onchange="refreshDashboard()">
-                    <option value="">所有四大構面</option>
-                    <option value="教學創新精進">構面 A1：教學創新精進</option>
-                    <option value="產學合作連結">構面 A2：產學合作連結</option>
-                    <option value="提升高教公共性">構面 A3：提升高教公共性</option>
-                    <option value="善盡社會責任 (USR)">構面 A4：善盡社會責任 (USR)</option>
-                </select>
-            </div>
-            <div class="col-md-2 text-end">
-                <button class="btn btn-sm btn-outline-secondary w-100" onclick="resetFilters()">重置過濾</button>
-            </div>
-        </div>
-
-        <!-- 主介面：依四大構面呈現所有指標 (附帶前後期增減 Δ 比對) -->
-        <div id="aspects-main-container">
-            <!-- JavaScript 動態渲染四大構面內容 -->
-        </div>
-
-        <!-- 四大構面達成率圖表與智慧稽核報告 (雙欄) -->
-        <div class="row g-4 my-4">
-            <div class="col-lg-7">
-                <div class="card-custom p-4 h-100">
-                    <h5 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
-                        <i class="bi bi-graph-up-arrow text-primary"></i> 📊 四大構面指標差異增減 (Δ%) 分析圖表
-                    </h5>
-                    <div style="position: relative; height: 320px;">
-                        <canvas id="aspectChart"></canvas>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-5">
-                <div class="card-custom p-4 h-100" id="audit-card">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="fw-bold text-dark m-0 d-flex align-items-center gap-2">
-                            <i class="bi bi-shield-lock-fill text-success"></i> 🛡️ 自動差異化稽核與滯後指標診斷
-                        </h5>
-                        <button class="btn btn-sm btn-outline-secondary" onclick="runAudit()">重新掃描</button>
-                    </div>
-                    <div id="audit-content" class="overflow-auto" style="max-height: 310px;">
-                        <div class="text-center text-muted py-4">
-                            <i class="bi bi-info-circle fs-3 d-block mb-2"></i>
-                            點擊「執行全表差異稽核」掃描前後期滯後與未達標項目。
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-    </div>
-
-    <!-- 📱 跨手機與電腦連線 (QR Code 掃碼專區) Modal -->
-    <div class="modal fade" id="shareModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content rounded-4 shadow">
-                <div class="modal-header bg-gradient bg-primary text-white rounded-top-4 py-3">
-                    <h5 class="modal-title fw-bold d-flex align-items-center gap-2">
-                        <i class="bi bi-qr-code-scan fs-4"></i> 📱 跨電腦與手機連線 (QR Code 掃碼專區)
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body p-4 text-center">
-                    <p class="text-muted small mb-3">同仁使用<strong>智慧型手機 (iPhone / Android)</strong> 或<strong>其他電腦</strong>，皆可透過以下方式連線使用系統：</p>
-
-                    <!-- QR Code 展示區 -->
-                    <div class="bg-light p-3 rounded-4 border d-inline-block shadow-sm mb-3">
-                        <img id="share-qrcode-img" src="" alt="連線 QR Code" class="img-fluid rounded-3" style="width:200px; height:200px;">
-                    </div>
-                    <div class="fw-bold text-primary mb-3" id="share-lan-url-display">http://...</div>
-
-                    <div class="alert alert-info text-start small mb-3">
-                        <div class="fw-bold mb-1"><i class="bi bi-phone-fill me-1"></i> 手機連線方式：</div>
-                        1. 手機連接與本機相同的 <strong>Wi-Fi / 局域網</strong>。<br>
-                        2. 開啟手機相機或 LINE 掃瞄器，對準上方 <strong>QR Code</strong> 即可秒開啟系統。<br>
-                    </div>
-
-                    <div class="alert alert-secondary text-start small mb-0">
-                        <div class="fw-bold mb-1"><i class="bi bi-globe me-1"></i> 跨網域 / 行動網路 (4G/5G) 外網連線：</div>
-                        如需從家裡或外網連線，可於控制台執行以下命令開啟免費外網通道：<br>
-                        <code class="user-select-all bg-dark text-warning p-1 rounded d-block mt-1">npx localtunnel --port 8080</code>
-                    </div>
-                </div>
-                <div class="modal-footer border-0 pt-0 justify-content-between">
-                    <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">關閉</button>
-                    <button type="button" class="btn btn-primary rounded-3 fw-bold" onclick="copyLanUrlFromModal()">
-                        <i class="bi bi-clipboard-check"></i> 複製連線網址
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 📤 上傳 Excel Modal -->
-    <div class="modal fade" id="uploadModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content rounded-4 shadow">
-                <div class="modal-header border-0 pb-0">
-                    <h5 class="modal-header-title fw-bold">📤 上傳新期填報檔 (自動比對前後差異)</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body p-4">
-                    <p class="text-muted small">上傳新期填報資料時，系統採用<strong>非覆蓋歷史比對模式</strong>，會保留舊期數據並自動計算前後期達成率增減 (Δ%)：</p>
-                    <div class="mb-3">
-                        <input type="file" id="excel-file-input" class="form-control" accept=".xlsx, .xls">
-                    </div>
-                    <div class="alert alert-warning small mb-0">
-                        <i class="bi bi-lightning-charge-fill me-1"></i> 上傳後將自動辨識「轉移達成（翻轉達標）」與「未顯著增加（滯後）」項目並標示於儀表板。
-                    </div>
-                </div>
-                <div class="modal-footer border-0 pt-0">
-                    <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">取消</button>
-                    <button type="button" class="btn btn-warning text-dark fw-bold rounded-3" onclick="uploadExcelFile()">上傳並自動比對差異</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 編輯指標 Modal -->
-    <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content rounded-4 shadow">
-                <div class="modal-header border-0 pb-0">
-                    <h5 class="modal-header-title fw-bold" id="editModalLabel">✏️ 填報實績與質化說明</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="editForm">
-                        <input type="hidden" id="edit-id">
-                        <div class="mb-3">
-                            <label class="form-label text-muted small fw-semibold">指標項目</label>
-                            <input type="text" id="edit-item" class="form-control" readonly>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label text-muted small fw-semibold">最新達成率 (%)</label>
-                            <input type="number" step="any" id="edit-rate" class="form-control" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label text-muted small fw-semibold">質化成效描述與未達標檢討說明（限300字）</label>
-                            <textarea id="edit-desc" class="form-control" rows="4" maxlength="350"></textarea>
-                            <div class="form-text text-end"><span id="desc-length">0</span> / 300 字</div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label text-muted small fw-semibold">近期重要里程碑</label>
-                            <input type="text" id="edit-milestone" class="form-control">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label text-muted small fw-semibold">管考期限</label>
-                            <input type="date" id="edit-deadline" class="form-control">
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer border-0 pt-0">
-                    <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">取消</button>
-                    <button type="button" class="btn btn-primary rounded-3" onclick="saveIndicator()">儲存更新</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- AI 策略與歷史軌跡 Modal -->
-    <div class="modal fade" id="aiModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content rounded-4 shadow">
-                <div class="modal-header bg-primary text-white rounded-top-4 py-3">
-                    <h5 class="modal-title fw-bold" id="aiModalTitle">🤖 前後期歷程比較與 AI 輔導報告</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body p-4" id="aiModalContent">
-                    <div class="text-center py-4">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ☁️ GitHub 自動同步與設定 Modal -->
-    <div class="modal fade" id="githubModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content rounded-4 shadow">
-                <div class="modal-header bg-dark text-white rounded-top-4 py-3">
-                    <h5 class="modal-title fw-bold d-flex align-items-center gap-2">
-                        <i class="bi bi-github fs-4 text-info"></i> ☁️ GitHub 自動同步與遠端儲存庫管理
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body p-4">
-                    <!-- Git 狀態顯示卡片 -->
-                    <div class="card bg-light border mb-4">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <h6 class="fw-bold m-0"><i class="bi bi-info-circle-fill text-primary me-1"></i> 本地 Git 儲存庫與連線狀態</h6>
-                                <span id="git-status-badge" class="badge bg-secondary">檢查中...</span>
-                            </div>
-                            <div class="row g-2 small text-muted">
-                                <div class="col-md-4"><strong>目前分支：</strong><span id="git-branch-text" class="text-dark fw-bold">-</span></div>
-                                <div class="col-md-8"><strong>遠端 Repo (origin)：</strong><span id="git-remote-text" class="text-dark fw-bold">未設定</span></div>
-                                <div class="col-md-12"><strong>待 Commit 變更數量：</strong><span id="git-uncommitted-text" class="text-dark fw-bold">0 個檔案</span></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 遠端 Repo 與 PAT 設定表單 -->
-                    <div class="mb-3">
-                        <label class="form-label text-dark fw-bold small">GitHub 遠端儲存庫網址 (Repository URL)</label>
-                        <input type="text" id="gh-remote-input" class="form-control" placeholder="https://github.com/YourUsername/sprout-pm-system.git">
-                        <div class="form-text">例如：<code>https://github.com/YourUsername/sprout-pm-system.git</code></div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label text-dark fw-bold small">GitHub Personal Access Token (PAT) [選填，用於私有庫或免密碼驗證]</label>
-                        <input type="password" id="gh-token-input" class="form-control" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
-                        <div class="form-text">若推送時提示存取權限錯誤，可填入 Token (具備 repo 寫入權限)。</div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label text-dark fw-bold small">本次 Commit 說明紀錄 (選填)</label>
-                        <input type="text" id="gh-msg-input" class="form-control" placeholder="自動同步高教深耕管考指標數據">
-                    </div>
-
-                    <!-- 操作結果訊息顯示框 -->
-                    <div id="github-output-box" class="alert d-none small mb-0"></div>
-                </div>
-                <div class="modal-footer border-0 pt-0">
-                    <button type="button" class="btn btn-outline-secondary rounded-3" onclick="saveGithubConfigOnly()">僅儲存設定</button>
-                    <button type="button" class="btn btn-primary rounded-3 fw-bold d-flex align-items-center gap-2" onclick="triggerGithubPush()" id="gh-push-btn">
-                        <i class="bi bi-cloud-upload-fill"></i> 🚀 立即 Commit 並同步上傳至 GitHub
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Bootstrap 5 JS Bundle -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
-    <script>
-        window.EMBEDDED_INDICATORS = /*__INDICATORS_JSON__*/[];
-        let rawData = [];
-        let currentThreshold = 0.70; 
-        let currentDeltaFilter = 'ALL'; // ALL, PROGRESS, STAGNANT, UNMET
-        let aspectChartObj = null;
-
-        const ASPECTS_META = {
-            "教學創新精進": { code: "A1", icon: "bi-journal-bookmark-fill", color: "#2563eb", bg: "#eff6ff", border: "#bfdbfe" },
-            "產學合作連結": { code: "A2", icon: "bi-briefcase-fill", color: "#d97706", bg: "#fffbeb", border: "#fde68a" },
-            "提升高教公共性": { code: "A3", icon: "bi-people-fill", color: "#059669", bg: "#ecfdf5", border: "#a7f3d0" },
-            "善盡社會責任 (USR)": { code: "A4", icon: "bi-heart-pulse-fill", color: "#7c3aed", bg: "#f5f3ff", border: "#ddd6fe" }
-        };
-
-        document.addEventListener('DOMContentLoaded', () => {
-            loadIndicators();
-            document.getElementById('edit-desc').addEventListener('input', (e) => {
-                document.getElementById('desc-length').textContent = e.target.value.length;
-            });
-        });
-
-        function loadIndicators() {
-            if (window.EMBEDDED_INDICATORS && Array.isArray(window.EMBEDDED_INDICATORS) && window.EMBEDDED_INDICATORS.length > 0) {
-                rawData = window.EMBEDDED_INDICATORS;
-                refreshDashboard();
-            }
-            fetch('/api/indicators')
-                .then(r => r.json())
-                .then(data => {
-                    if (data && data.length > 0) {
-                        rawData = data;
-                        refreshDashboard();
-                    }
-                })
-                .catch(err => {
-                    console.log('Using embedded static indicators:', err);
-                });
-        }
-
-        function setDeltaFilter(type) {
-            currentDeltaFilter = type;
-            // Update button UI active status
-            const btns = document.querySelectorAll('#delta-filter-group .btn');
-            btns.forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
-            refreshDashboard();
-        }
-
-        function openUploadModal() {
-            const modal = new bootstrap.Modal(document.getElementById('uploadModal'));
-            modal.show();
-        }
-
-        function uploadExcelFile() {
-            const input = document.getElementById('excel-file-input');
-            if (!input.files || input.files.length === 0) {
-                alert('請先選擇要上傳的 Excel (.xlsx) 檔案！');
-                return;
-            }
-            const file = input.files[0];
-
-            fetch('/api/upload_excel', {
-                method: 'POST',
-                body: file
-            })
-            .then(r => r.json())
-            .then(res => {
-                if (res.success) {
-                    bootstrap.Modal.getInstance(document.getElementById('uploadModal')).hide();
-                    alert('🎉 ' + res.message);
-                    loadIndicators();
-                } else {
-                    alert('上傳解析失敗：' + (res.error || '不支援的檔案格式'));
-                }
-            });
-        }
-
-        function syncThresholdInput(val) {
-            val = Math.max(0, Math.min(100, val));
-            document.getElementById('threshold-number').value = val;
-            currentThreshold = val / 100.0;
-            refreshDashboard();
-        }
-
-        function syncThresholdSlider(val) {
-            val = Math.max(0, Math.min(100, val));
-            document.getElementById('threshold-range').value = val;
-            currentThreshold = val / 100.0;
-            refreshDashboard();
-        }
-
-        function refreshDashboard() {
-            updateTrendSummary();
-            renderAspectSections();
-            renderChart();
-        }
-
-        function updateTrendSummary() {
-            const pct = (currentThreshold * 100).toFixed(0);
-            document.getElementById('summary-threshold-val').textContent = pct;
-
-            const progressList = rawData.filter(i => i.trend_status === 'PROGRESS_MET');
-            const stagnantList = rawData.filter(i => i.trend_status === 'STAGNANT');
-            const unmetList = rawData.filter(i => i.calc_rate < currentThreshold);
-            const loadedTargetsCount = rawData.filter(i => i.annual_targets && Object.keys(i.annual_targets).length > 0).length;
-
-            document.getElementById('cnt-progress').textContent = progressList.length;
-            document.getElementById('cnt-stagnant').textContent = stagnantList.length;
-
-            const container = document.getElementById('trend-summary-cards');
-            container.innerHTML = `
-                <div class="col-md-3">
-                    <div class="card-custom p-3 border-start border-4 border-primary">
-                        <div class="text-muted small">總列管與跨年度目標載入</div>
-                        <div class="fs-4 fw-bold text-primary">${loadedTargetsCount} / ${rawData.length} 項</div>
-                        <div class="small text-muted">已全面載入 112~116 全期目標值</div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card-custom p-3 border-start border-4 border-success">
-                        <div class="text-muted small">🎉 轉移達成 / 顯著進步</div>
-                        <div class="fs-4 fw-bold text-success">${progressList.length} 項</div>
-                        <div class="small text-success">前期未達標翻轉或成長 Δ ≥ +5%</div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card-custom p-3 border-start border-4 border-warning">
-                        <div class="text-muted small">⚠️ 達成率未顯著增加 (滯後)</div>
-                        <div class="fs-4 fw-bold text-warning">${stagnantList.length} 項</div>
-                        <div class="small text-muted">增幅 Δ ≤ +1% 且尚未高標達標</div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card-custom p-3 border-start border-4 border-danger">
-                        <div class="text-muted small">🔴 未達門檻 (&lt;${pct}%)</div>
-                        <div class="fs-4 fw-bold text-danger">${unmetList.length} 項</div>
-                        <div class="small text-danger">需重點管考與 AI 輔導介入</div>
-                    </div>
-                </div>
-            `;
-        }
-
-        function scrollToAspect(code) {
-            const el = document.getElementById(`aspect-section-${code}`);
-            if (el) el.scrollIntoView({ behavior: 'smooth' });
-        }
-
-        // 核心渲染邏輯：依四大構面呈現對應指標
-        function renderAspectSections() {
-            const container = document.getElementById('aspects-main-container');
-            const search = document.getElementById('search-input').value.toLowerCase();
-            const categoryFilter = document.getElementById('category-filter').value;
-            const aspectFilter = document.getElementById('aspect-filter').value;
-
-            let html = '';
-
-            Object.keys(ASPECTS_META).forEach(aspect => {
-                if (aspectFilter && aspectFilter !== aspect) return;
-
-                const meta = ASPECTS_META[aspect];
-                let allAspectItems = rawData.filter(i => i.aspect === aspect);
-
-                if (categoryFilter) {
-                    allAspectItems = allAspectItems.filter(i => i.category === categoryFilter);
-                }
-
-                if (search) {
-                    allAspectItems = allAspectItems.filter(i => 
-                        i.item.toLowerCase().includes(search) || 
-                        i.id.toLowerCase().includes(search) || 
-                        i.dept.toLowerCase().includes(search)
-                    );
-                }
-                
-                // 按趨勢狀態過濾
-                let displayItems = allAspectItems;
-                if (currentDeltaFilter === 'PROGRESS') {
-                    displayItems = allAspectItems.filter(i => i.trend_status === 'PROGRESS_MET');
-                } else if (currentDeltaFilter === 'STAGNANT') {
-                    displayItems = allAspectItems.filter(i => i.trend_status === 'STAGNANT');
-                } else if (currentDeltaFilter === 'UNMET') {
-                    displayItems = allAspectItems.filter(i => i.calc_rate < currentThreshold);
-                }
 
                 html += `
                 <div class="card-custom p-4 mb-4" id="aspect-section-${meta.code}">
@@ -3075,9 +2474,6 @@ class SproutWebServer(http.server.SimpleHTTPRequestHandler):
                                     <th style="width: 90px;">代碼/類別</th>
                                     <th>指標項目與實績說明</th>
                                     <th style="width: 100px;">主責單位</th>
-                                    <th style="width: 200px;">前後期比較 (次新 ➔ 最新)</th>
-                                    <th style="width: 130px;">差異增減 (Δ%)</th>
-                                    <th style="width: 170px;">趨勢狀態</th>
                                     <th class="text-center" style="width: 100px;">操作</th>
                                 </tr>
                             </thead>
@@ -3510,12 +2906,7 @@ class SproutWebServer(http.server.SimpleHTTPRequestHandler):
                 box.className = 'alert alert-danger small mb-0';
                 box.textContent = '連線失敗: ' + err;
             });
-        }
-    </script>
-</body>
-</html>
-"""
-        return html_content.replace("/*__INDICATORS_JSON__*/[]", db_json)
+
 
 def get_lan_ip():
     try:

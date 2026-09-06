@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>輔英科技大學 - 高教深耕計畫智慧管考戰情室</title>
+    <style>
+        /* 1. 莫蘭迪減壓色系與基礎重設 */
+        :root {
+            --bg-color: #F8FAFC;
+            --card-color: #FFFFFF;
+            --border-color: #E2E8F0;
+            --text-main: #1E293B;
+            --text-muted: #64748B;
+            
+            /* 三色狀態色 */
+            --green-bg: #D1FAE5;
+            --green-txt: #065F46;
+            --green-bar: #10B981;
+            
+            --yellow-bg: #FEF3C7;
+            --yellow-txt: #92400E;
+            --yellow-bar: #F59E0B;
+            
+            --red-bg: #FEE2E2;
+            --red-txt: #991B1B;
+            --red-bar: #EF4444;
+            
+            --blue-brand: #2B579A;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft JhengHei", "Noto Sans CJK TC", sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.5;
+            padding: 30px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* 2. 頁頭排版 */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 24px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 16px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--text-main);
+            margin-bottom: 4px;
+        }
+
+        .header p {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: bold;
+        }
+
+        .header .ver {
+            font-size: 13px;
+            background-color: #EEF2F6;
+            color: var(--text-muted);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        /* 3. 第一層：四大統計卡 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background-color: var(--card-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.01);
+            text-align: center;
+        }
+
+        .stat-card.red-border { border-top: 5px solid var(--red-bar); }
+        .stat-card.yellow-border { border-top: 5px solid var(--yellow-bar); }
+        .stat-card.green-border { border-top: 5px solid var(--green-bar); }
+        .stat-card.blue-border { border-top: 5px solid var(--blue-brand); }
+
+        .stat-card .title {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .stat-card .value {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+
+        /* 4. 第三層：重新設計的清單 (例外優先排序) */
+        .list-container {
+            background-color: var(--card-color);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 10px 15px rgba(0,0,0,0.02);
+            margin-bottom: 30px;
+        }
+
+        .list-header {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--blue-brand);
+            margin-bottom: 18px;
+            border-left: 5px solid var(--blue-brand);
+            padding-left: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .list-header span {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: normal;
+        }
+
+        /* 表格與行設計 */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .table-header-row {
+            display: grid;
+            grid-template-columns: 120px 2.5fr 100px 100px 160px 100px 130px;
+            padding: 12px 16px;
+            background-color: #F1F5F9;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: bold;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        .indicator-row {
+            display: grid;
+            grid-template-columns: 120px 2.5fr 100px 100px 160px 100px 130px;
+            padding: 16px;
+            background-color: var(--card-color);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 13px;
+            margin-bottom: 10px;
+            align-items: center;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .indicator-row:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.04);
+            border-color: #CBD5E1;
+        }
+
+        /* 狀態膠囊 */
+        .status-pill {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: bold;
+            text-align: center;
+            width: 85px;
+        }
+        .status-pill.red { background-color: var(--red-bg); color: var(--red-txt); }
+        .status-pill.yellow { background-color: var(--yellow-bg); color: var(--yellow-txt); }
+        .status-pill.green { background-color: var(--green-bg); color: var(--green-txt); }
+
+        .name-cell .name {
+            font-weight: bold;
+            color: var(--text-main);
+            margin-bottom: 4px;
+        }
+
+        .name-cell .dept {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .center-text {
+            text-align: center;
+            font-weight: bold;
+        }
+
+        /* 進度條組件 */
+        .progress-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .progress-bar-bg {
+            flex-grow: 1;
+            height: 10px;
+            background-color: #E2E8F0;
+            border-radius: 9999px;
+            overflow: hidden;
+            max-width: 100px;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            border-radius: 9999px;
+        }
+
+        .progress-value {
+            font-weight: bold;
+            font-size: 12px;
+            min-width: 45px;
+        }
+
+        .yoy-cell {
+            text-align: center;
+            font-weight: bold;
+        }
+        .yoy-up { color: var(--green-txt); }
+        .yoy-down { color: var(--red-txt); }
+
+        /* 行政動作按鈕 */
+        .action-btn {
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: bold;
+            text-align: center;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .action-btn.red { background-color: var(--red-bg); color: var(--red-txt); }
+        .action-btn.red:hover { background-color: #FCA5A5; }
+        .action-btn.yellow { background-color: var(--yellow-bg); color: var(--yellow-txt); }
+        .action-btn.yellow:hover { background-color: #FDE68A; }
+        .action-btn.green { background-color: var(--green-bg); color: var(--green-txt); }
+        .action-btn.green:hover { background-color: #A7F3D0; }
+
+        /* ================= 5. 第四層：四合一立體指標履歷彈窗 (Modal) ================= */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-card {
+            background-color: var(--bg-color);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 980px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            animation: modalFadeIn 0.3s ease;
+        }
+
+        @keyframes modalFadeIn {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        /* 彈窗頭部 */
+        .modal-header {
+            background-color: #1E293B;
+            color: #FFFFFF;
+            padding: 20px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            font-size: 16px;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+
+        .modal-header p {
+            font-size: 11px;
+            color: #94A3B8;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #94A3B8;
+            font-size: 24px;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .close-btn:hover { color: #FFFFFF; }
+
+        .modal-body {
+            padding: 24px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        /* 四合一區塊網格 */
+        .modal-grid-row-1 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .modal-grid-row-2 {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .modal-grid-row-3 {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 20px;
+        }
+
+        /* 彈窗內卡片 */
+        .sub-card {
+            background-color: var(--card-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.01);
+        }
+
+        .sub-card .sub-title {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: bold;
+            margin-bottom: 12px;
+            border-left: 3px solid var(--blue-brand);
+            padding-left: 6px;
+        }
+
+        /* 學院長度條 */
+        .breakdown-row {
+            margin-bottom: 12px;
+        }
+        .breakdown-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        .breakdown-bar-bg {
+            height: 8px;
+            background-color: #E2E8F0;
+            border-radius: 9999px;
+            overflow: hidden;
+        }
+        .breakdown-bar-fill {
+            height: 100%;
+            background-color: var(--blue-brand);
+            border-radius: 9999px;
+        }
+
+        /* 核章文件區域 */
+        .doc-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #F8FAFC;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            font-size: 11px;
+        }
+        .doc-name { font-weight: bold; color: var(--text-main); }
+        .doc-meta { color: var(--text-muted); font-size: 10px; margin-top: 2px;}
+
+        /* 日誌時間軸 */
+        .log-timeline {
+            font-size: 11px;
+            line-height: 1.6;
+        }
+        .log-item {
+            position: relative;
+            padding-left: 16px;
+            margin-bottom: 10px;
+        }
+        .log-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 5px;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: var(--blue-brand);
+        }
+
+        /* ================= 6. 右側滑出式抽屜面板 (Slide Drawer) ================= */
+        .drawer-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(2px);
+            display: none;
+            justify-content: flex-end;
+            z-index: 999;
+        }
+
+        .drawer-card {
+            background-color: var(--bg-color);
+            width: 100%;
+            max-width: 500px;
+            height: 100%;
+            box-shadow: -10px 0 25px rgba(0,0,0,0.08);
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            animation: drawerSlideIn 0.3s ease;
+        }
+
+        @keyframes drawerSlideIn {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+
+        .drawer-header {
+            padding: 24px;
+            border-bottom: 2px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .drawer-header h3 {
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--text-main);
+        }
+
+        .drawer-body {
+            padding: 24px;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        .drawer-section {
+            background-color: var(--card-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 18px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.01);
+        }
+
+        .drawer-section.red {
+            border-left: 5px solid var(--red-bar);
+        }
+
+        .drawer-section .pill {
+            font-size: 10px;
+            background-color: var(--red-bg);
+            color: var(--red-txt);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            display: inline-block;
+        }
+
+        .drawer-section h4 {
+            font-size: 13px;
+            font-weight: bold;
+            color: var(--text-main);
+            margin-bottom: 8px;
+        }
+
+        .drawer-section .meta {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .drawer-section .desc {
+            font-size: 11px;
+            background-color: #FFF5F5;
+            color: #991B1B;
+            padding: 10px;
+            border-radius: 6px;
+            line-height: 1.5;
+        }
+
+        /* 頁尾聲明 */
+        .footer {
+            margin-top: 40px;
+            font-size: 12px;
+            color: var(--text-muted);
+            text-align: center;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <!-- 1. 頁頭 -->
+    <div class="header">
+        <div>
+            <h1>🏫 輔英科技大學 - 高教深耕計畫智慧管考戰情室</h1>
+            <p>共同績效指標管考清單 (高階決策 / 例外管理 V1 改版方案)</p>
+        </div>
+        <div class="ver">資料版本：114學年度結算 / 115年第二次填報</div>
+    </div>
+
+    <!-- 2. 第一層：大盤統計卡 -->
+    <div class="stats-grid">
+        <div class="stat-card blue-border">
+            <div class="title">全校管制指標總數</div>
+            <div class="value">35 項</div>
+        </div>
+        <div class="stat-card green-border">
+            <div class="title">🟢 正常達標 (達成率 ≥ 90%)</div>
+            <div class="value" style="color: var(--green-txt);">25 項 (71.4%)</div>
+        </div>
+        <div class="stat-card yellow-border">
+            <div class="title">🟡 預警關注 (70% - 90%)</div>
+            <div class="value" style="color: var(--yellow-txt);">6 項 (17.1%)</div>
+        </div>
+        <div class="stat-card red-border">
+            <div class="title">🚨 嚴重落後 (達成率 < 70%)</div>
+            <div class="value" style="color: var(--red-txt);">4 項 (11.4%)</div>
+        </div>
+    </div>
+
+    <!-- 3. 第三層：指標清單 (例外優先重排) -->
+    <div class="list-container">
+        <div class="list-header">
+            部定共同績效指標清單 (指標排序：落後 ➔ 預警 ➔ 達標)
+            <span>💡 提示：點擊 COM_014 可彈出詳細資料履歷卡；點擊落後指標右側按鈕可開啟督導抽屜</span>
+        </div>
+
+        <div class="table-responsive">
+            <!-- 表頭 -->
+            <div class="table-header-row">
+                <div class="center-text">管考狀態</div>
+                <div>指標項目名稱與衡量方式</div>
+                <div class="center-text">當年目標</div>
+                <div class="center-text">當前實績</div>
+                <div>當期達成率健康度</div>
+                <div class="center-text">YoY同期比</div>
+                <div class="center-text">高階管考動作</div>
+            </div>
+
+            <!-- 🚨 嚴重落後指標 1 -->
+            <div class="indicator-row" onclick="openDrawer('COM_035')">
+                <div class="center-text"><span class="status-pill red">🚨 嚴重落後</span></div>
+                <div class="name-cell">
+                    <div class="name">採用創新教學模式教師數 (COM_035)</div>
+                    <div class="dept">教務處課註組 | 衡量方式：實施6週以上翻轉/PBL教學之專任教師人數</div>
+                </div>
+                <div class="center-text">400 人</div>
+                <div class="center-text" style="color: var(--red-txt); font-weight: bold;">131 人</div>
+                <div class="progress-container">
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" style="width: 32.75%; background-color: var(--red-bar);"></div>
+                    </div>
+                    <span class="progress-value" style="color: var(--red-txt);">32.75%</span>
+                </div>
+                <div class="yoy-cell yoy-down">▼ -12.4%</div>
+                <div class="center-text"><button class="action-btn red">📝 審查檢討</button></div>
+            </div>
+
+            <!-- 🚨 嚴重落後指標 2 -->
+            <div class="indicator-row" onclick="openDrawer('COM_002')">
+                <div class="center-text"><span class="status-pill red">🚨 嚴重落後</span></div>
+                <div class="name-cell">
+                    <div class="name">學生參加競賽獲獎人次 (COM_002)</div>
+                    <div class="dept">學務處課指組 | 衡量方式：中央部會採認競賽前三名人次 (已排除重複報送)</div>
+                </div>
+                <div class="center-text">2,250人次</div>
+                <div class="center-text" style="color: var(--red-txt); font-weight: bold;">154 人次</div>
+                <div class="progress-container">
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" style="width: 6.84%; background-color: var(--red-bar);"></div>
+                    </div>
+                    <span class="progress-value" style="color: var(--red-txt);">6.84%</span>
+                </div>
+                <div class="yoy-cell yoy-down">▼ -45.2%</div>
+                <div class="center-text"><button class="action-btn red">📂 去重對帳</button></div>
+            </div>
+
+            <!-- 🚨 嚴重落後指標 3 -->
+            <div class="indicator-row" onclick="openDrawer('COM_024')">
+                <div class="center-text"><span class="status-pill red">🚨 嚴重落後</span></div>
+                <div class="name-cell">
+                    <div class="name">學生達英文證照通過張數 - B2等級 (COM_024)</div>
+                    <div class="dept">共同教育中心 | 衡量方式：通過 CEFR 英文證照 B2 檢定累計張數</div>
+                </div>
+                <div class="center-text">3 張</div>
+                <div class="center-text" style="color: var(--red-txt); font-weight: bold;">1 張</div>
+                <div class="progress-container">
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" style="width: 33.33%; background-color: var(--red-bar);"></div>
+                    </div>
+                    <span class="progress-value" style="color: var(--red-txt);">33.33%</span>
+                </div>
+                <div class="yoy-cell yoy-down">▼ -66.7%</div>
+                <div class="center-text"><button class="action-btn red">📝 審查檢討</button></div>
+            </div>
+
+            <!-- 🟡 預警關注指標 1 -->
+            <div class="indicator-row" onclick="alert('提示：本項目處於預警狀態，可督導主責處室。')">
+                <div class="center-text"><span class="status-pill yellow">⚠️ 預警關注</span></div>
+                <div class="name-cell">
+                    <div class="name">學生達英文證照通過張數 - A1等級 (COM_021)</div>
+                    <div class="dept">共同教育中心 | 衡量方式：通過 CEFR 英文證照 A1 檢定累計張數</div>
+                </div>
+                <div class="center-text">314 張</div>
+                <div class="center-text" style="color: var(--yellow-txt); font-weight: bold;">280 張</div>
+                <div class="progress-container">
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" style="width: 89.17%; background-color: var(--yellow-bar);"></div>
+                    </div>
+                    <span class="progress-value" style="color: var(--yellow-txt);">89.17%</span>
+                </div>
+                <div class="yoy-cell yoy-up">▲ +4.2%</div>
+                <div class="center-text"><button class="action-btn yellow">💬 留言追蹤</button></div>
+            </div>
+
+            <!-- 🟡 預警關注指標 2 -->
+            <div class="indicator-row" onclick="alert('提示：本項目處於預警狀態，可督導主責處室。')">
+                <div class="center-text"><span class="status-pill yellow">⚠️ 預警關注</span></div>
+                <div class="name-cell">
+                    <div class="name">學校教師完成半年與專業研習或研究比率 (COM_001)</div>
+                    <div class="dept">研發處 | 衡量方式：完成當輪次半年研習之專任教師比率</div>
+                </div>
+                <div class="center-text">50.00 %</div>
+                <div class="center-text" style="color: var(--yellow-txt); font-weight: bold;">45.02 %</div>
+                <div class="progress-container">
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" style="width: 90.04%; background-color: var(--yellow-bar);"></div>
+                    </div>
+                    <span class="progress-value" style="color: var(--yellow-txt);">90.04%</span>
+                </div>
+                <div class="yoy-cell yoy-up">▲ +2.1%</div>
+                <div class="center-text"><button class="action-btn yellow">💬 留言追蹤</button></div>
+            </div>
+
+            <!-- 🟢 正常達標指標 1 (點擊打開四合一履歷卡 Modal) -->
+            <div class="indicator-row" onclick="openModal('COM_014')">
+                <div class="center-text"><span class="status-pill green">🟢 正常達標</span></div>
+                <div class="name-cell">
+                    <div class="name" style="color: var(--blue-brand);">學生通過證照數人次 (COM_014) - 🔍 點擊看四合一履歷卡</div>
+                    <div class="dept">教務處學生組 | 衡量方式：學生考取核心專業證照累計通過人次 (校基庫表 4-8-2)</div>
+                </div>
+                <div class="center-text">1,450人次</div>
+                <div class="center-text" style="color: var(--green-txt); font-weight: bold;">1,375 人次</div>
+                <div class="progress-container">
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" style="width: 94.83%; background-color: var(--green-bar);"></div>
+                    </div>
+                    <span class="progress-value" style="color: var(--green-txt);">94.83%</span>
+                </div>
+                <div class="yoy-cell yoy-up">▲ +10.1%</div>
+                <div class="center-text"><button class="action-btn green" onclick="event.stopPropagation(); openModal('COM_014');">✔️ 核章唯讀</button></div>
+            </div>
+
+            <!-- 🟢 正常達標指標 2 -->
+            <div class="indicator-row" onclick="alert('本指標已正常達標且核章鎖定。')">
+                <div class="center-text"><span class="status-pill green">🟢 正常達標</span></div>
+                <div class="name-cell">
+                    <div class="name">曾修讀程式設計課程學生數 (COM_020)</div>
+                    <div class="dept">教務處課註組 | 衡量方式：曾修讀程式設計課程之全校累計學生人數 (校基庫表 4-2-11)</div>
+                </div>
+                <div class="center-text">4,500 人</div>
+                <div class="center-text" style="color: var(--green-txt); font-weight: bold;">5,142 人</div>
+                <div class="progress-container">
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" style="width: 100%; background-color: var(--green-bar);"></div>
+                    </div>
+                    <span class="progress-value" style="color: var(--green-txt);">114.27%</span>
+                </div>
+                <div class="yoy-cell yoy-up">▲ +15.3%</div>
+                <div class="center-text"><button class="action-btn green">✔️ 核章唯讀</button></div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 頁尾 -->
+    <div class="footer">
+        © 輔英科技大學 高教深耕計畫管考辦公室 • 智慧管考系統前端視覺原型頁面
+    </div>
+
+</div>
+
+<!-- ================= 4. 第四層：四合一立體指標履歷彈窗 (Modal 結構) ================= -->
+<div class="modal-overlay" id="indicatorModal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <div>
+                <h2>COM_014: 學生通過證照數人次 (學生專業實務技術能力推動成效)</h2>
+                <p>深耕追蹤智慧指標履歷卡 • 數據溯源與責任對帳一體化</p>
+            </div>
+            <button class="close-btn" onclick="closeModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            
+            <!-- 第一區塊：大盤指標核心數值 -->
+            <div class="modal-grid-row-1">
+                <div class="sub-card" style="text-align: center;">
+                    <div style="font-size: 11px; color: var(--text-muted); font-weight: bold;">🎯 當期年度目標值</div>
+                    <div style="font-size: 20px; font-weight: 800; margin-top: 8px; color: var(--text-main);">1,450 人次</div>
+                </div>
+                <div class="sub-card" style="text-align: center;">
+                    <div style="font-size: 11px; color: var(--text-muted); font-weight: bold;">📊 教育部官方核定實績</div>
+                    <div style="font-size: 20px; font-weight: 800; margin-top: 8px; color: var(--blue-brand);">1,375 人次</div>
+                </div>
+                <div class="sub-card" style="text-align: center; background-color: var(--green-bg);">
+                    <div style="font-size: 11px; color: var(--green-txt); font-weight: bold;">🟢 目前達成率</div>
+                    <div style="font-size: 20px; font-weight: 800; margin-top: 8px; color: var(--green-txt);">94.83%</div>
+                </div>
+                <div class="sub-card" style="text-align: center;">
+                    <div style="font-size: 11px; color: var(--text-muted); font-weight: bold;">⚖️ YoY同期比</div>
+                    <div style="font-size: 20px; font-weight: 800; margin-top: 8px; color: var(--green-txt);">▲ +10.18%</div>
+                </div>
+            </div>
+
+            <!-- 第二與第三區塊：學院分流與主管核章佐證 -->
+            <div class="modal-grid-row-2">
+                <!-- 中左：學院數據貢獻分流 (系科數據溯源) -->
+                <div class="sub-card">
+                    <div class="sub-title">系科數據貢獻分流 (全校 1,375 人次累計溯源)</div>
+                    <div class="breakdown-row">
+                        <div class="breakdown-label"><span>護理學院</span><span>654 人次 (47.5%)</span></div>
+                        <div class="breakdown-bar-bg"><div class="breakdown-bar-fill" style="width: 47.5%;"></div></div>
+                    </div>
+                    <div class="breakdown-row">
+                        <div class="breakdown-label"><span>醫事健康學院</span><span>412 人次 (30.0%)</span></div>
+                        <div class="breakdown-bar-bg"><div class="breakdown-bar-fill" style="width: 30.0%;"></div></div>
+                    </div>
+                    <div class="breakdown-row">
+                        <div class="breakdown-label"><span>環境與生命科學院</span><span>189 人次 (13.7%)</span></div>
+                        <div class="breakdown-bar-bg"><div class="breakdown-bar-fill" style="width: 13.7%;"></div></div>
+                    </div>
+                    <div class="breakdown-row">
+                        <div class="breakdown-label"><span>人文管理學院</span><span>120 人次 (8.8%)</span></div>
+                        <div class="breakdown-bar-bg"><div class="breakdown-bar-fill" style="width: 8.8%;"></div></div>
+                    </div>
+                </div>
+
+                <!-- 中右：主管核章與對帳對帳帳本 -->
+                <div class="sub-card">
+                    <div class="sub-title">主管核章與去重帳本 (行政責任數位封裝)</div>
+                    
+                    <div class="doc-item">
+                        <div>
+                            <div class="doc-name">📥 COM_014_證照採計名冊_教務處.xlsx</div>
+                            <div class="doc-meta">經過學號去重核實 | 大小: 1.2 MB | MD5 驗證通過</div>
+                        </div>
+                        <span style="color: var(--blue-brand); font-weight: bold; cursor: pointer;">下載</span>
+                    </div>
+
+                    <div class="doc-item">
+                        <div>
+                            <div class="doc-name">🔍 處室一級主管簽章總表_教務長.pdf</div>
+                            <div class="doc-meta">線下公文實體簽章掃描回傳檔 | 狀態: 唯讀鎖定</div>
+                        </div>
+                        <span style="color: var(--blue-brand); font-weight: bold; cursor: pointer;">檢視</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 第四區塊：質性策略與管考歷史日誌 -->
+            <div class="modal-grid-row-3">
+                <div class="sub-card">
+                    <div class="sub-title">日常推動具體成果 (質性策略，限制300字元)</div>
+                    <div style="font-size: 11px; color: #475569; line-height: 1.6;">
+                        為培養學生專業實務能力，藉由系科專業證照盤點，聚焦核心證照及分級獎勵制度，驅動學生超越自我、挑戰自我與進階發展，並由各系提出學生專業證照輔導班計畫，輔導學生考取證照，以提昇學生考照率及未來就業競爭力。目前已完成 114 年目標推動。
+                    </div>
+                </div>
+
+                <div class="sub-card">
+                    <div class="sub-title">系統管考與填報稽核日誌 (Audit Trail)</div>
+                    <div class="log-timeline">
+                        <div class="log-item"><strong>2026/10/12 14:20</strong> - 承辦人張專員完成日常填報暫存。</div>
+                        <div class="log-item"><strong>2026/10/15 09:30</strong> - 教育部官方核定值下發，系統自動覆蓋 1,375人次 並鎖定唯讀。</div>
+                        <div class="log-item"><strong>2026/11/05 16:00</strong> - 處室上傳主管核章總表掃描檔，填報正式送出並永久封存。</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- ================= 5. 右側滑出式抽屜面板 (Slide Drawer 結構) ================= -->
+<div class="drawer-overlay" id="drawerModal" onclick="closeDrawer()">
+    <div class="drawer-card" onclick="event.stopPropagation()">
+        <div class="drawer-header">
+            <h3 id="drawerTitle">主管督導異常指標詳情</h3>
+            <button class="close-btn" onclick="closeDrawer()" style="color: var(--text-muted)">✕</button>
+        </div>
+        <div class="drawer-body" id="drawerContent">
+            <!-- 內容會由 JS 根據點擊動態替換 -->
+        </div>
+    </div>
+</div>
+
+<script>
+    // JS 互動邏輯 (完全原生，不需要任何外部庫)
+    
+    // 開啟指標詳細履歷 Modal
+    function openModal(id) {
+        if(id === 'COM_014') {
+            document.getElementById('indicatorModal').style.display = 'flex';
+        }
+    }
+
+    // 關閉 Modal
+    function closeModal() {
+        document.getElementById('indicatorModal').style.display = 'none';
+    }
+
+    // 開啟右側滑出抽屜 (針對落後指標)
+    function openDrawer(id) {
+        var title = "";
+        var html = "";
+        
+        if (id === 'COM_035') {
+            title = "🚨 嚴重落後指標管考與改善措施";
+            html = `
+                <div class="drawer-section red">
+                    <span class="pill">達成率 32.75%</span>
+                    <h4>採用創新教學模式教師數 (COM_035)</h4>
+                    <div class="meta">
+                        <span>🎯 當前目標：<strong>400 人</strong></span>
+                        <span>📊 官方實績：<strong style="color: var(--red-txt);">131 人</strong></span>
+                    </div>
+                    <div class="desc">
+                        <strong>📝 承辦人填報未達標原因與改善：</strong><br><br>
+                        1. <strong>原因分析：</strong>因少子化班級縮編，且部分教師對於實施連續6週以上創新教學（PBL/翻轉）認為負擔較重，意願偏低。<br><br>
+                        2. <strong>改善措施：</strong>教務處課註組將於新學期主管會議加強宣導，明定並鼓勵老師至少一門課實施6周以上創新教學。且與各系主任核對，因與原定目標值差異大，建議於第三期修正合理目標值。
+                    </div>
+                </div>
+                <div style="font-size: 11px; color: var(--text-muted); text-align: center; margin-top: 20px;">
+                    📅 鎖定日期：114學年度第2學期結算鎖定 | 主責：教務處課註組
+                </div>
+            `;
+        } else if (id === 'COM_002') {
+            title = "🚨 嚴重落後指標管考與對帳對帳";
+            html = `
+                <div class="drawer-section red">
+                    <span class="pill">達成率 6.84%</span>
+                    <h4>學生參加競賽獲獎人次 (COM_002)</h4>
+                    <div class="meta">
+                        <span>🎯 當前目標：<strong>2,250 人次</strong></span>
+                        <span>📊 官方實績：<strong style="color: var(--red-txt);">154 人次</strong></span>
+                    </div>
+                    <div class="desc">
+                        <strong>📝 學生競賽獲獎數據去重對帳說明：</strong><br><br>
+                        1. <strong>重複填報痛點修正：</strong>教育部官方初步匯入數值為 308人次，經學務處課指組進行任務 A 「最终去重與佐證核對」後，確認係因填報時誤重複上傳多人資料，導致數據虛高倍增。現已剔除重複名冊，核實為真實 <strong>154人次</strong>，達成率為 6.84%，已重新封裝上報。<br><br>
+                        2. <strong>後續對策：</strong>後續將限制必須使用系統「通用型名冊範本」導入，後台以「學號+競賽名稱」自動執行唯一性檢核（Deduplication），防杜人工算錯與重複報送。
+                    </div>
+                </div>
+                <div style="font-size: 11px; color: var(--text-muted); text-align: center; margin-top: 20px;">
+                    📅 鎖定日期：114學年度第1學期結算鎖定 | 主責：學務處課指組
+                </div>
+            `;
+        } else if (id === 'COM_024') {
+            title = "🚨 嚴重落後指標管考與改善措施";
+            html = `
+                <div class="drawer-section red">
+                    <span class="pill">達成率 33.33%</span>
+                    <h4>學生達英文證照通過張數 - B2等級 (COM_024)</h4>
+                    <div class="meta">
+                        <span>🎯 當前目標：<strong>3 張</strong></span>
+                        <span>📊 官方實績：<strong style="color: var(--red-txt);">1 張</strong></span>
+                    </div>
+                    <div class="desc">
+                        <strong>📝 高階英檢未達標原因與改善：</strong><br><br>
+                        1. <strong>現況分析：</strong>本校學生英語基礎結構對應 B2 以上屬高階英文，難度極高，且非畢業門檻強制要求，報考意願與通過數偏低。<br><br>
+                        2. <strong>改善對策：</strong>共同教育中心新學年將持續推動英檢高階輔導班，除了提供證照獎勵補助，另特別新增「進步獎勵方案」以提高學生報考誘因。
+                    </div>
+                </div>
+                <div style="font-size: 11px; color: var(--text-muted); text-align: center; margin-top: 20px;">
+                    📅 鎖定日期：114學年度第1學期結算鎖定 | 主責：共同教育中心
+                </div>
+            `;
+        }
+
+        if (title !== "") {
+            document.getElementById('drawerTitle').innerText = title;
+            document.getElementById('drawerContent').innerHTML = html;
+            document.getElementById('drawerModal').style.display = 'flex';
+        }
+    }
+
+    // 關閉右側滑出抽屜
+    function closeDrawer() {
+        document.getElementById('drawerModal').style.display = 'none';
+    }
+</script>
+
+</body>
+</html>

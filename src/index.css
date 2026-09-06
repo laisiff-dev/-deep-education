@@ -1,192 +1,126 @@
-/* Base Design System Tokens & Glassmorphism Styles */
+/* ================= 莫蘭迪現代減壓調色盤 (Morandi Design System) ================= */
 :root {
-  --color-bg-dark: #07090e;
-  --color-card-bg: rgba(15, 23, 42, 0.75);
-  --color-card-border: rgba(30, 41, 59, 0.8);
-  --color-critical: #ff2a5f;
-  --color-warning: #f59e0b;
-  --color-success: #10b981;
-  --color-info: #06b6d4;
-  --font-family-main: 'Noto Sans TC', 'Inter', sans-serif;
-  --font-family-num: 'Outfit', sans-serif;
+  --bg-slate: #F1F5F9;
+  --bg-canvas: #F8FAFC;
+  --card-white: #FFFFFF;
+  --border-gray: #E2E8F0;
+  --border-dark: #CBD5E1;
+  --text-main: #1E293B;
+  --text-muted: #64748B;
+  
+  /* 品牌深藍與主色 */
+  --blue-brand: #1E3A8A;
+  --blue-brand-light: #2563EB;
+  --blue-brand-soft: #EFF6FF;
+  --blue-brand-hover: #1D4ED8;
+  
+  /* 莫蘭迪健康度燈號三色 */
+  --green-bg: #D1FAE5;
+  --green-txt: #065F46;
+  --green-bar: #10B981;
+  --green-border: #A7F3D0;
+  
+  --yellow-bg: #FEF3C7;
+  --yellow-txt: #92400E;
+  --yellow-bar: #F59E0B;
+  --yellow-border: #FDE68A;
+  
+  --red-bg: #FEE2E2;
+  --red-txt: #991B1B;
+  --red-bar: #EF4444;
+  --red-border: #FECACA;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 body {
-  margin: 0;
-  padding: 0;
-  background-color: var(--color-bg-dark);
-  background-image: 
-    radial-gradient(circle at 15% 15%, rgba(225, 29, 72, 0.12) 0%, transparent 45%),
-    radial-gradient(circle at 85% 20%, rgba(14, 165, 233, 0.12) 0%, transparent 45%),
-    radial-gradient(circle at 50% 80%, rgba(99, 102, 241, 0.08) 0%, transparent 50%);
-  background-attachment: fixed;
-  font-family: var(--font-family-main);
-  color: #f8fafc;
-  overflow-x: hidden;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", Roboto, sans-serif;
+  background-color: var(--bg-slate);
+  color: var(--text-main);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom Scrollbar */
+/* 玻璃擬態與陰影 */
+.glass-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-gray);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* 滾動條美化 */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #090d16;
+  background: #F1F5F9;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
-  border-radius: 9999px;
+  background: #CBD5E1;
+  border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: #94A3B8;
 }
 
-/* Glassmorphism Panel */
-.glass-panel {
-  background: rgba(15, 23, 42, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(51, 65, 85, 0.6);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+/* 動畫過渡 */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.glass-panel-hover {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.glass-panel-hover:hover {
-  border-color: rgba(99, 102, 241, 0.6);
-  transform: translateY(-2px);
-  box-shadow: 0 12px 40px -10px rgba(0, 0, 0, 0.6), 0 0 24px 0 rgba(99, 102, 241, 0.2);
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
 }
 
-/* FLASHING & PULSING ALERT ANIMATIONS FOR LOW ACHIEVEMENT RATE (<70%) */
-@keyframes pulse-critical-glow {
-  0% {
-    border-color: rgba(244, 63, 94, 0.9);
-    box-shadow: 0 0 14px rgba(244, 63, 94, 0.6), inset 0 0 14px rgba(244, 63, 94, 0.2);
+@keyframes modalScale {
+  from { transform: scale(0.96); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-in {
+  animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-modal {
+  animation: modalScale 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* 膠囊徽章樣式 */
+.badge-capsule {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+.badge-capsule.green { background-color: var(--green-bg); color: var(--green-txt); border: 1px solid var(--green-border); }
+.badge-capsule.yellow { background-color: var(--yellow-bg); color: var(--yellow-txt); border: 1px solid var(--yellow-border); }
+.badge-capsule.red { background-color: var(--red-bg); color: var(--red-txt); border: 1px solid var(--red-border); }
+
+/* 列印專用樣式 */
+@media print {
+  .no-print {
+    display: none !important;
   }
-  50% {
-    border-color: rgba(225, 29, 72, 1);
-    box-shadow: 0 0 32px rgba(225, 29, 72, 0.95), 0 0 50px rgba(244, 63, 94, 0.7), inset 0 0 24px rgba(225, 29, 72, 0.4);
+  body {
+    background-color: #FFFFFF !important;
+    padding: 0 !important;
   }
-  100% {
-    border-color: rgba(244, 63, 94, 0.9);
-    box-shadow: 0 0 14px rgba(244, 63, 94, 0.6), inset 0 0 14px rgba(244, 63, 94, 0.2);
+  .print-only {
+    display: block !important;
   }
-}
-
-.card-critical-flashing {
-  animation: pulse-critical-glow 1.5s infinite ease-in-out;
-  background: linear-gradient(135deg, rgba(225, 29, 72, 0.22) 0%, rgba(15, 23, 42, 0.9) 100%);
-  position: relative;
-}
-
-.card-critical-flashing::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0; height: 3.5px;
-  background: linear-gradient(90deg, #f43f5e, #fb7185, #f43f5e);
-  border-top-left-radius: 0.75rem;
-  border-top-right-radius: 0.75rem;
-  animation: shimmer-bar 2s infinite linear;
-}
-
-@keyframes shimmer-bar {
-  0% { opacity: 0.6; }
-  50% { opacity: 1; }
-  100% { opacity: 0.6; }
-}
-
-/* PULSING WARNING ANIMATIONS FOR 70%-90% */
-@keyframes pulse-warning-glow {
-  0% {
-    border-color: rgba(245, 158, 11, 0.6);
-    box-shadow: 0 0 12px rgba(245, 158, 11, 0.3);
-  }
-  50% {
-    border-color: rgba(245, 158, 11, 0.95);
-    box-shadow: 0 0 24px rgba(245, 158, 11, 0.65), inset 0 0 12px rgba(245, 158, 11, 0.25);
-  }
-  100% {
-    border-color: rgba(245, 158, 11, 0.6);
-    box-shadow: 0 0 12px rgba(245, 158, 11, 0.3);
-  }
-}
-
-.card-warning-pulsing {
-  animation: pulse-warning-glow 2.2s infinite ease-in-out;
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(15, 23, 42, 0.9) 100%);
-}
-
-/* SUCCESS STEADY GLOW FOR >= 90% */
-.card-success-glow {
-  border-color: rgba(16, 185, 129, 0.35);
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(15, 23, 42, 0.9) 100%);
-}
-.card-success-glow:hover {
-  border-color: rgba(16, 185, 129, 0.7);
-  box-shadow: 0 0 24px rgba(16, 185, 129, 0.35);
-}
-
-/* Live Signal Dot Pulse */
-@keyframes signal-ping {
-  0% { transform: scale(1); opacity: 1; }
-  75%, 100% { transform: scale(2.2); opacity: 0; }
-}
-
-.signal-dot {
-  position: relative;
-}
-.signal-dot::after {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; width: 100%; height: 100%;
-  border-radius: 50%;
-  background-color: currentColor;
-  animation: signal-ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
-}
-
-/* Ticker Animation */
-@keyframes ticker-slide {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-
-.ticker-wrap {
-  overflow: hidden;
-  white-space: nowrap;
-}
-
-.ticker-content {
-  display: inline-block;
-  animation: ticker-slide 35s linear infinite;
-}
-
-.ticker-wrap:hover .ticker-content {
-  animation-play-state: paused;
-}
-
-/* Typography styles */
-.font-number {
-  font-family: var(--font-family-num);
-}
-
-/* Progress bar glowing text */
-.text-glow-red {
-  text-shadow: 0 0 14px rgba(244, 63, 94, 0.85);
-}
-.text-glow-amber {
-  text-shadow: 0 0 12px rgba(245, 158, 11, 0.75);
-}
-.text-glow-emerald {
-  text-shadow: 0 0 12px rgba(16, 185, 129, 0.75);
-}
-
-/* Hide scrollbar helper */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
 }
