@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>輔英科技大學 - 115年高教深耕智慧填報工作台 (教務處融合版)</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --fy-primary: #0056b3;
+            --fy-primary-dark: #003d80;
+            --fy-secondary: #008080;
+            --fy-bg: #f4f6f9;
+        }
+        body {
+            background-color: var(--fy-bg);
+            font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
+            padding-bottom: 2rem;
+        }
+        .navbar-custom {
+            background-color: var(--fy-primary);
+            box-shadow: 0 2px 4px rgba(0,0,0,.1);
+        }
+        .sidebar {
+            background: #ffffff;
+            min-height: calc(100vh - 56px);
+            border-right: 1px solid #dee2e6;
+        }
+        .sidebar .nav-link {
+            color: #495057;
+            font-weight: 500;
+            padding: 0.75rem 1rem;
+        }
+        .sidebar .nav-link.active {
+            color: var(--fy-primary);
+            background-color: #e9ecef;
+            border-left: 4px solid var(--fy-primary);
+        }
+        .card-custom {
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,.075);
+            margin-bottom: 1.25rem;
+        }
+        .badge-semester { background-color: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+        .badge-academic  { background-color: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+        .badge-year      { background-color: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; }
+        .is-locked-bg { background-color: #f8fafc; border: 1px dashed #cbd5e1; }
+        .dim-btn.active {
+            background-color: var(--fy-primary) !important;
+            color: #fff !important;
+        }
+        .progress-sm { height: 8px; }
+    </style>
+</head>
+<body>
+
+    <!-- 頂部導航列 -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center" href="#">
+                <i class="bi bi-mortarboard-fill me-2 fs-4 text-warning"></i>
+                <span class="fw-bold">輔英科技大學 | 高等教育深耕計畫 智慧填報工作台</span>
+            </a>
+            <div class="d-flex align-items-center gap-3 text-white">
+                <!-- 填報月份選擇器 -->
+                <div class="d-flex align-items-center bg-black bg-opacity-25 px-2 py-1 rounded border border-light border-opacity-25">
+                    <label for="monthSelect" class="text-warning text-nowrap me-2 small fw-bold"><i class="bi bi-calendar3 me-1"></i>填報月份：</label>
+                    <select id="monthSelect" onchange="onMonthChange()" class="form-select form-select-sm fw-bold border-0" style="width: auto;">
+                        <!-- 115年 -->
+                        <option value="115-08">115年 08月 (115-1學期 / 115學年 / 115年度)</option>
+                        <option value="115-09">115年 09月 (115-1學期 / 115學年 / 115年度)</option>
+                        <option value="115-10">115年 10月 (115-1學期 / 115學年 / 115年度)</option>
+                        <option value="115-11">115年 11月 (115-1學期 / 115學年 / 115年度)</option>
+                        <option value="115-12">115年 12月 (115-1學期 / 115學年 / 115年度)</option>
+                        <!-- 116年 -->
+                        <option value="116-01">116年 01月 (115-1學期 / 115學年 / 116年度★新年度)</option>
+                        <option value="116-02">116年 02月 (115-2學期★新學期 / 115學年 / 116年度)</option>
+                        <option value="116-03">116年 03月 (115-2學期 / 115學年 / 116年度)</option>
+                        <option value="116-04">116年 04月 (115-2學期 / 115學年 / 116年度)</option>
+                        <option value="116-05">116年 05月 (115-2學期 / 115學年 / 116年度)</option>
+                        <option value="116-06">116年 06月 (115-2學期 / 115學年 / 116年度)</option>
+                        <option value="116-07">116年 07月 (115-2學期 / 115學年 / 116年度)</option>
+                        <option value="116-08">116年 08月 (116-1學期★新學期 / 116學年★新學年 / 116年度)</option>
+                    </select>
+                </div>
+
+                <!-- 質化作文鎖定開關 -->
+                <button id="lockToggleBtn" onclick="toggleQualitativeLock()" class="btn btn-sm btn-dark fw-bold d-flex align-items-center gap-1">
+                    <i class="bi bi-lock-fill text-warning"></i> <span id="lockToggleText">常態月追蹤 (作文鎖定)</span>
+                </button>
+
+                <span class="d-none d-xl-inline"><i class="bi bi-building me-1"></i> 權責單位：<strong>教務處</strong></span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 左側選單 (教務處風格) -->
+            <div class="col-md-2 d-none d-md-block sidebar py-3">
+                <div class="text-uppercase fw-bold text-secondary px-3 mb-2 small">教務處深耕計畫專區</div>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#"><i class="bi bi-journal-check text-primary me-2"></i>教務處權責指標 (49項)</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-muted" href="#"><i class="bi bi-clock-history me-2"></i>管考紀錄與退件歷史</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-muted" href="#"><i class="bi bi-cloud-arrow-up me-2"></i>佐證資料彙整庫</a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- 主要內容區 -->
+            <main class="col-md-10 ms-sm-auto px-md-4 py-4">
+
+                <!-- 儀表板摘要卡片 (教務處風格) -->
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <div class="card card-custom p-3 border-start border-primary border-4 bg-white">
+                            <div class="text-muted small fw-bold">教務處應填報指標總數</div>
+                            <div class="fs-3 fw-bold text-primary" id="totalIndicatorsCount">49 項</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card card-custom p-3 border-start border-warning border-4 bg-white">
+                            <div class="text-muted small fw-bold">當前顯示指標平均達成率</div>
+                            <div class="fs-3 fw-bold text-warning" id="avgProgressText">0.0%</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card card-custom p-3 border-start border-success border-4 bg-white">
+                            <div class="text-muted small fw-bold">質化填報階段模式</div>
+                            <div class="fs-5 fw-bold text-success mt-1" id="qualitativeStatusText">🟢 常態月微亮點模式</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 週期說明 Banner (研發處優點) -->
+                <div class="card card-custom p-3 bg-white mb-3">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                        <div>
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <span id="currentMonthBadge" class="badge bg-primary fs-6">115年 08月</span>
+                                <span class="text-muted small fw-bold">| 當前指標採計週期對齊狀態：</span>
+                            </div>
+                            <div class="d-flex flex-wrap gap-2 mt-2">
+                                <span class="badge badge-semester px-2.5 py-1.5 rounded"><i class="bi bi-book me-1"></i>學期型：<strong id="activeSemesterTag">115-1 學期</strong></span>
+                                <span class="badge badge-academic px-2.5 py-1.5 rounded"><i class="bi bi-mortarboard me-1"></i>學年型：<strong id="activeAcademicTag">115學年度</strong></span>
+                                <span class="badge badge-year px-2.5 py-1.5 rounded"><i class="bi bi-calendar-event me-1"></i>年度型：<strong id="activeYearTag">115年度</strong></span>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button onclick="saveAllData()" class="btn btn-sm btn-outline-secondary fw-bold"><i class="bi bi-save me-1"></i>暫存本地</button>
+                            <button onclick="exportCSV()" class="btn btn-sm btn-success fw-bold"><i class="bi bi-file-earmark-excel me-1"></i>匯出數據表</button>
+                        </div>
+                    </div>
+                    <div id="cycleChangeNotice" class="alert alert-warning py-1 px-3 mt-2 mb-0 small d-none">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i><span id="cycleNoticeText"></span>
+                    </div>
+                </div>
+
+                <!-- 篩選器列 (研發處優點) -->
+                <div class="card card-custom p-3 bg-white mb-4">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                        <!-- 面向 Tabs -->
+                        <div class="btn-group flex-wrap gap-1" id="dimFilterGroup">
+                            <button onclick="filterDim('ALL')" class="btn btn-sm btn-light dim-btn active fw-bold">全部 (49)</button>
+                            <button onclick="filterDim('教學創新精進')" class="btn btn-sm btn-light dim-btn fw-bold">教學創新精進</button>
+                            <button onclick="filterDim('善盡社會責任')" class="btn btn-sm btn-light dim-btn fw-bold">善盡社會責任</button>
+                            <button onclick="filterDim('提升高教公共性')" class="btn btn-sm btn-light dim-btn fw-bold">提升高教公共性</button>
+                            <button onclick="filterDim('推動校務研究')" class="btn btn-sm btn-light dim-btn fw-bold">推動校務研究</button>
+                        </div>
+
+                        <!-- 類型與關鍵字 -->
+                        <div class="d-flex align-items-center gap-2">
+                            <select id="typeFilter" onchange="renderIndicators()" class="form-select form-select-sm fw-bold" style="width: auto;">
+                                <option value="ALL">全部類型</option>
+                                <option value="量化">量化指標</option>
+                                <option value="質化">質化指標</option>
+                            </select>
+                            <input type="text" id="searchInput" oninput="renderIndicators()" placeholder="搜尋指標關鍵字..." class="form-control form-control-sm" style="width: 200px;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 指標列表容器 -->
+                <div id="indicatorList" class="d-flex flex-column gap-3">
+                    <!-- 動態渲染處 -->
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- 數據與邏輯 -->
+    <script>
+        // 教務處 49 項完整指標數據集
+        const RAW_INDICATORS = [
+            {"id":"IND_001","dim":"教學創新精進","group":"學生專業實務技術能力推動成效","cat":"共同","name":"學生通過專業技術證照數人次","cycle":"學期","unit":"人次","type":"量化","note":""},
+            {"id":"IND_003","dim":"教學創新精進","group":"學生專業實務技術能力推動成效","cat":"共同","name":"協助學生專業實務技術能力提升之推動策略描述","cycle":"學期","unit":"","type":"質化","note":""},
+            {"id":"IND_005","dim":"教學創新精進","group":"學生專業實務技術能力推動成效","cat":"自訂","name":"產業鏈結實務專題製作件數","cycle":"年度","unit":"件","type":"量化","note":""},
+            {"id":"IND_006","dim":"教學創新精進","group":"教師實務經驗提升成效","cat":"共同","name":"專任教師具備半年以上與專業相關產業實務經驗比率","cycle":"學期","unit":"百分比","type":"量化","note":""},
+            {"id":"IND_008","dim":"教學創新精進","group":"教師實務經驗提升成效","cat":"共同","name":"專任教師進行深耕服務或研究比率","cycle":"學期","unit":"百分比","type":"量化","note":""},
+            {"id":"IND_010","dim":"教學創新精進","group":"課程與教學模式之創新","cat":"共同","name":"修讀跨領域學習特色課程之學生人數及比率","cycle":"學期","unit":"百分比","type":"量化","note":""},
+            {"id":"IND_011","dim":"教學創新精進","group":"課程與教學模式之創新","cat":"共同","name":"推動跨領域學習之策略描述","cycle":"學期","unit":"","type":"質化","note":""},
+            {"id":"IND_012","dim":"教學創新精進","group":"課程與教學模式之創新","cat":"自訂","name":"開設創新教學法課程門數","cycle":"年度","unit":"門","type":"量化","note":""},
+            {"id":"IND_013","dim":"教學創新精進","group":"課程與教學模式之創新","cat":"自訂","name":"參與跨領域微學程學生人數","cycle":"年度","unit":"人","type":"量化","note":""},
+            {"id":"IND_014","dim":"教學創新精進","group":"數位科技能力培育","cat":"共同","name":"學生修讀程式設計或AI應用課程比率","cycle":"學期","unit":"百分比","type":"量化","note":""},
+            {"id":"IND_015","dim":"教學創新精進","group":"數位科技能力培育","cat":"共同","name":"推動數位科技能力之策略與成果描述","cycle":"學期","unit":"","type":"質化","note":""},
+            {"id":"IND_016","dim":"教學創新精進","group":"雙語推動與國際化","cat":"共同","name":"開設全英語授課(EMI)專業課程門數","cycle":"學期","unit":"門","type":"量化","note":""},
+            {"id":"IND_017","dim":"教學創新精進","group":"雙語推動與國際化","cat":"共同","name":"推動雙語教學之具體做法與成效描述","cycle":"學期","unit":"","type":"質化","note":""},
+            {"id":"IND_018","dim":"教學創新精進","group":"學習成效輔導與預警","cat":"共同","name":"學業預警學生接受輔導且成功解除率","cycle":"學期","unit":"百分比","type":"量化","note":""},
+            {"id":"IND_019","dim":"教學創新精進","group":"學習成效輔導與預警","cat":"共同","name":"學習輔導機制之運作與成效描述","cycle":"學期","unit":"","type":"質化","note":""},
+            {"id":"IND_020","dim":"教學創新精進","group":"學習成效輔導與預警","cat":"自訂","name":"提供同儕課業輔導總人次","cycle":"年度","unit":"人次","type":"量化","note":""},
+            {"id":"IND_021","dim":"教學創新精進","group":"教師教學專業發展","cat":"共同","name":"教師參與教學研習與社群人數比率","cycle":"學期","unit":"百分比","type":"量化","note":""},
+            {"id":"IND_022","dim":"教學創新精進","group":"教師教學專業發展","cat":"共同","name":"支持教師專業發展之策略與措施描述","cycle":"學期","unit":"","type":"質化","note":""},
+            {"id":"IND_023","dim":"教學創新精進","group":"通識教育精進","cat":"共同","name":"通識課程革新與微學分開設門數","cycle":"年度","unit":"門","type":"量化","note":""},
+            {"id":"IND_024","dim":"教學創新精進","group":"通識教育精進","cat":"共同","name":"通識教育創新機制與推動成果描述","cycle":"學期","unit":"","type":"質化","note":""},
+            {"id":"IND_025","dim":"教學創新精進","group":"教務系統與數據驅動","cat":"自訂","name":"智慧教務服務與學習歷程使用人次","cycle":"年度","unit":"人次","type":"量化","note":""},
+            {"id":"IND_026","dim":"教學創新精進","group":"教務系統與數據驅動","cat":"自訂","name":"教務智慧化管理之推動成果描述","cycle":"學期","unit":"","type":"質化","note":""},
+            {"id":"IND_027","dim":"教學創新精進","group":"高階專業人才培育","cat":"共同","name":"研究生參與產學合作與創新研究比率","cycle":"學期","unit":"百分比","type":"量化","note":""},
+            {"id":"IND_028","dim":"教學創新精進","group":"高階專業人才培育","cat":"共同","name":"高階人才培育策略與成效描述","cycle":"學期","unit":"","type":"質化","note":""},
+            {"id":"IND_029","dim":"教學創新精進","group":"職涯輔導與實習銜接","cat":"共同","name":"參與職場體驗與全期實習之學生人數比率","cycle":"學期","unit":"百分比","type":"量化","note":""},
+            {"id":"IND_030","dim":"教學創新精進","group":"職涯輔導與實習銜接","cat":"共同","name":"落實學生實習輔導與就業銜接策略描述","cycle":"學期","unit":"","type":"質化","note":""},
+            {"id":"IND_031","dim":"教學創新精進","group":"專業自主學習","cat":"自訂","name":"學生申請自主學習計畫通過件數","cycle":"年度","unit":"件","type":"量化","note":""},
+            {"id":"IND_032","dim":"教學創新精進","group":"專業自主學習","cat":"自訂","name":"自主學習成果展覽與分享次數","cycle":"年度","unit":"場次","type":"量化","note":""},
+            {"id":"IND_033","dim":"教學創新精進","group":"教學評鑑與品質保證","cat":"共同","name":"通過外部專業認證與評鑑之學系比率","cycle":"年度","unit":"百分比","type":"量化","note":""},
+            {"id":"IND_034","dim":"教學創新精進","group":"教學評鑑與品質保證","cat":"共同","name":"教學品質保證機制與持續改善描述","cycle":"學期","unit":"","type":"質化","note":""},
+            {"id":"IND_035","dim":"善盡社會責任","group":"在地關懷與社會實踐","cat":"共同","name":"教務處協助USR融入課程門數","cycle":"年度","unit":"門","type":"量化","note":""},
+            {"id":"IND_036","dim":"善盡社會責任","group":"在地關懷與社會實踐","cat":"共同","name":"推動教學結合社會責任之作法描述","cycle":"學期","unit":"","type":"質化","note":""},
+            {"id":"IND_037","dim":"提升高教公共性","group":"經濟或文化不利學生協助","cat":"共同","name":"經濟或文化不利學生獲得學習輔導與獎補助比率","cycle":"學期","unit":"百分比","type":"量化","note":""},
+            {"id":"IND_038","dim":"提升高教公共性","group":"經濟或文化不利學生協助","cat":"共同","name":"健全弱勢學生學習輔導機制與成效描述","cycle":"學期","unit":"","type":"質化","note":""},
+            {"id":"IND_039","dim":"提升高教公共性","group":"經濟或文化不利學生協助","cat":"自訂","name":"弱勢學生課業輔導覆蓋率","cycle":"年度","unit":"百分比","type":"量化","note":""},
+            {"id":"IND_040","dim":"提升高教公共性","group":"公開資訊與資訊透明","cat":"共同","name":"校務資訊與辦學成效公開更新率","cycle":"年度","unit":"百分比","type":"量化","note":""},
+            {"id":"IND_041","dim":"提升高教公共性","group":"公開資訊與資訊透明","cat":"共同","name":"落實資訊公開與公信力提升描述","cycle":"學期","unit":"","type":"質化","note":""},
+            {"id":"IND_042","dim":"提升高教公共性","group":"多元管道招生","cat":"共同","name":"招收經濟或文化不利學生入學人數與比率","cycle":"學期","unit":"百分比","type":"量化","note":""},
+            {"id":"IND_043","dim":"提升高教公共性","group":"多元管道招生","cat":"共同","name":"多元入學管道與扶弱招生策略描述","cycle":"學期","unit":"","type":"質化","note":""},
+            {"id":"IND_044","dim":"提升高教公共性","group":"原住民學生輔導","cat":"自訂","name":"原住民學生學習輔導與課程參與人次","cycle":"年度","unit":"人次","type":"量化","note":""},
+            {"id":"IND_045","dim":"提升高教公共性","group":"原住民學生輔導","cat":"自訂","name":"推動原住民學生學習支持具體措施描述","cycle":"學期","unit":"","type":"質化","note":""},
+            {"id":"IND_046","dim":"推動校務研究","group":"數據驅動教學創新","cat":"共同","name":"利用校務研究改善教學與學習成效之報告件數","cycle":"年度","unit":"件","type":"量化","note":""},
+            {"id":"IND_047","dim":"推動校務研究","group":"數據驅動教學創新","cat":"共同","name":"校務研究分析應用於教務決策之具體案例描述","cycle":"學期","unit":"","type":"質化","note":""},
+            {"id":"IND_048","dim":"推動校務研究","group":"數據驅動教學創新","cat":"自訂","name":"教務數據指標視覺化儀表板建置數","cycle":"年度","unit":"個","type":"量化","note":""},
+            {"id":"IND_049","dim":"推動校務研究","group":"數據驅動教學創新","cat":"自訂","name":"定期進行學生學習成效分析之報告公開數","cycle":"年度","unit":"份","type":"量化","note":""}
+        ];
+
+        // 系統狀態
+        let currentMonthKey = "115-08";
+        let currentDimFilter = "ALL";
+        let isQualitativeLocked = true; 
+        let storeData = {};
+
+        // 週期資訊計算
+        function getCycleInfo(monthKey) {
+            const [yStr, mStr] = monthKey.split('-');
+            const yearNum = parseInt(yStr, 10);
+            const monthNum = parseInt(mStr, 10);
+
+            let sem = "", acad = "", yr = `${yearNum}年度`;
+
+            if (yearNum === 115) {
+                sem = "115-1 學期";
+                acad = "115學年度";
+            } else if (yearNum === 116) {
+                if (monthNum === 1) {
+                    sem = "115-1 學期";
+                    acad = "115學年度";
+                } else if (monthNum >= 2 && monthNum <= 7) {
+                    sem = "115-2 學期";
+                    acad = "115學年度";
+                } else {
+                    sem = "116-1 學期";
+                    acad = "116學年度";
+                }
+            }
+            return { sem, acad, yr, monthNum, yearNum };
+        }
+
+        // 月份切換事件
+        function onMonthChange() {
+            const select = document.getElementById('monthSelect');
+            currentMonthKey = select.value;
+            const cycle = getCycleInfo(currentMonthKey);
+
+            document.getElementById('currentMonthBadge').textContent = `${cycle.yearNum}年 ${cycle.monthNum < 10 ? '0'+cycle.monthNum : cycle.monthNum}月`;
+            document.getElementById('activeSemesterTag').textContent = cycle.sem;
+            document.getElementById('activeAcademicTag').textContent = cycle.acad;
+            document.getElementById('activeYearTag').textContent = cycle.yr;
+
+            const noticeBox = document.getElementById('cycleChangeNotice');
+            const noticeText = document.getElementById('cycleNoticeText');
+            noticeBox.classList.add('d-none');
+
+            if (currentMonthKey === '116-01') {
+                noticeBox.classList.remove('d-none');
+                noticeText.textContent = "提醒：116年01月起進入「116年度」新年度目標！但【學期型】指標仍屬於「115-1學期」。";
+            } else if (currentMonthKey === '116-02') {
+                noticeBox.classList.remove('d-none');
+                noticeText.textContent = "提醒：116年02月起進入「115-2學期」，【學期型】指標數據開始填寫新學期目標與進度！";
+            } else if (currentMonthKey === '116-08') {
+                noticeBox.classList.remove('d-none');
+                noticeText.textContent = "提醒：116年08月起進入「116-1學期」與「116學年度」，【學期型】與【學年型】指標進入全新階段！";
+            }
+
+            renderIndicators();
+        }
+
+        // 質化防寫鎖定切換
+        function toggleQualitativeLock() {
+            isQualitativeLocked = !isQualitativeLocked;
+            const btn = document.getElementById('lockToggleBtn');
+            const txt = document.getElementById('lockToggleText');
+            const statusTxt = document.getElementById('qualitativeStatusText');
+
+            if (isQualitativeLocked) {
+                btn.className = "btn btn-sm btn-dark fw-bold d-flex align-items-center gap-1";
+                txt.textContent = "常態月追蹤 (作文鎖定)";
+                statusTxt.textContent = "🟢 常態月微亮點模式";
+                statusTxt.className = "fs-5 fw-bold text-success mt-1";
+            } else {
+                btn.className = "btn btn-sm btn-danger fw-bold d-flex align-items-center gap-1";
+                txt.textContent = "🚨 期末總結算 (開放作文)";
+                statusTxt.textContent = "🚨 期末質化總結算模式";
+                statusTxt.className = "fs-5 fw-bold text-danger mt-1";
+            }
+            renderIndicators();
+        }
+
+        // 面向頁籤切換
+        function filterDim(dim) {
+            currentDimFilter = dim;
+            document.querySelectorAll('.dim-btn').forEach(btn => {
+                if (btn.textContent.includes(dim) || (dim === 'ALL' && btn.textContent.includes('全部'))) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            renderIndicators();
+        }
+
+        // 渲染指標列表 (教務處藍色卡片 + 研發處標籤與欄位)
+        function renderIndicators() {
+            const container = document.getElementById('indicatorList');
+            const typeFilter = document.getElementById('typeFilter').value;
+            const searchKeyword = document.getElementById('searchInput').value.trim().toLowerCase();
+            const cycle = getCycleInfo(currentMonthKey);
+
+            container.innerHTML = "";
+
+            const filtered = RAW_INDICATORS.filter(item => {
+                const matchDim = (currentDimFilter === 'ALL' || item.dim === currentDimFilter);
+                const matchType = (typeFilter === 'ALL' || item.type === typeFilter);
+                const matchSearch = item.name.toLowerCase().includes(searchKeyword) || 
+                                    item.group.toLowerCase().includes(searchKeyword) ||
+                                    item.id.toLowerCase().includes(searchKeyword);
+                return matchDim && matchType && matchSearch;
+            });
+
+            document.getElementById('totalIndicatorsCount').textContent = `${filtered.length} 項`;
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<div class="card card-custom p-5 text-center text-muted fw-bold">查無符合條件之教務處指標項目</div>`;
+                document.getElementById('avgProgressText').textContent = "0.0%";
+                return;
+            }
+
+            let totalProgressSum = 0;
+            let quantCount = 0;
+
+            filtered.forEach(item => {
+                let activeCycleName = item.cycle === '學期' ? cycle.sem : (item.cycle === '學年度' ? cycle.acad : cycle.yr);
+                let cycleBadgeStyle = item.cycle === '學期' ? 'badge-semester' : (item.cycle === '學年度' ? 'badge-academic' : 'badge-year');
+
+                const saved = storeData[item.id] || { val: "", target: 100, text: "", highlight: "" };
+
+                const card = document.createElement('div');
+                card.className = "card card-custom bg-white overflow-hidden";
+
+                let innerHTML = `
+                    <div class="card-header bg-light py-2 px-3 d-flex flex-wrap justify-content-between align-items-center gap-2 border-bottom">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-secondary">${item.id}</span>
+                            <span class="badge bg-primary">${item.dim}</span>
+                            <span class="badge ${item.cat === '共同' ? 'bg-primary-subtle text-primary' : 'bg-success-subtle text-success'} border">${item.cat}指標</span>
+                            <strong class="text-dark small ms-1">${item.group}</strong>
+                        </div>
+                        <div>
+                            <span class="badge ${cycleBadgeStyle}">
+                                ${item.cycle}型 | 當前對齊：${activeCycleName}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-body p-3">
+                        <div class="fw-bold text-dark mb-2">${item.name}</div>
+                `;
+
+                if (item.type === '量化') {
+                    quantCount++;
+                    const targetVal = parseFloat(saved.target) || 100;
+                    const inputVal = parseFloat(saved.val) || 0;
+                    const rate = Math.min(1000, Math.round((inputVal / targetVal) * 100));
+                    totalProgressSum += Math.min(100, rate);
+
+                    let barColor = rate >= 100 ? "bg-success" : (rate >= 80 ? "bg-warning" : "bg-danger");
+
+                    innerHTML += `
+                        <div class="row g-2 align-items-center bg-light p-2 rounded border">
+                            <div class="col-md-2">
+                                <label class="form-label text-muted small fw-bold mb-1">目標值 (${item.unit || '單位'})</label>
+                                <input type="number" id="target_${item.id}" value="${saved.target || ''}" oninput="updateQuantData('${item.id}')" placeholder="填寫目標" class="form-control form-control-sm fw-bold">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label text-muted small fw-bold mb-1">當期實績數據</label>
+                                <input type="number" id="val_${item.id}" value="${saved.val || ''}" oninput="updateQuantData('${item.id}')" placeholder="填寫實績" class="form-control form-control-sm fw-bold">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label text-muted small fw-bold mb-1">${activeCycleName} 達成率</label>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span id="rate_${item.id}" class="fw-bold small text-primary">${rate}%</span>
+                                    <div class="progress progress-sm flex-grow-1">
+                                        <div id="bar_${item.id}" class="progress-bar ${barColor}" style="width: ${Math.min(100, rate)}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label text-muted small fw-bold mb-1">佐證檔案上傳</label>
+                                <input type="file" class="form-control form-control-sm">
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // 質化指標
+                    if (isQualitativeLocked) {
+                        innerHTML += `
+                            <div class="is-locked-bg p-3 rounded">
+                                <div class="d-flex justify-between align-items-center mb-1">
+                                    <span class="text-muted small fw-bold"><i class="bi bi-lock-fill text-warning me-1"></i>常態月追蹤期 (質化作文鎖定中，期末結算開展)</span>
+                                </div>
+                                <div>
+                                    <label class="form-label text-dark small fw-bold mb-1">💡 當月 50字微亮點 (選填輕量留痕)</label>
+                                    <input type="text" id="hl_${item.id}" value="${saved.highlight || ''}" onchange="updateQualHighlight('${item.id}')" maxlength="50" placeholder="以一句話簡述當月推動微成果..." class="form-control form-control-sm">
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        innerHTML += `
+                            <div class="bg-danger bg-opacity-10 p-3 rounded border border-danger border-opacity-25">
+                                <div class="text-danger small fw-bold mb-2"><i class="bi bi-unlock-fill me-1"></i>🚨 期末官方結算期 (請填寫完整執行策略與具體成果說明)</div>
+                                <textarea id="txt_${item.id}" onchange="updateQualText('${item.id}')" rows="2" placeholder="請詳細說明 ${activeCycleName} 內執行情形..." class="form-control form-control-sm mb-2">${saved.text || ''}</textarea>
+                                <input type="file" class="form-control form-control-sm">
+                            </div>
+                        `;
+                    }
+                }
+
+                innerHTML += `</div>`;
+                card.innerHTML = innerHTML;
+                container.appendChild(card);
+            });
+
+            const avgProgress = quantCount > 0 ? (totalProgressSum / quantCount).toFixed(1) : "0.0";
+            document.getElementById('avgProgressText').textContent = `${avgProgress}%`;
+        }
+
+        // 數據更新 handlers
+        function updateQuantData(id) {
+            const target = document.getElementById(`target_${id}`).value;
+            const val = document.getElementById(`val_${id}`).value;
+
+            if (!storeData[id]) storeData[id] = {};
+            storeData[id].target = target;
+            storeData[id].val = val;
+
+            const targetVal = parseFloat(target) || 100;
+            const inputVal = parseFloat(val) || 0;
+            const rate = Math.min(1000, Math.round((inputVal / targetVal) * 100));
+
+            const rateElem = document.getElementById(`rate_${id}`);
+            const barElem = document.getElementById(`bar_${id}`);
+
+            if (rateElem) rateElem.textContent = `${rate}%`;
+            if (barElem) {
+                barElem.style.width = `${Math.min(100, rate)}%`;
+                barElem.className = rate >= 100 ? "progress-bar bg-success" : (rate >= 80 ? "progress-bar bg-warning" : "progress-bar bg-danger");
+            }
+        }
+
+        function updateQualHighlight(id) {
+            const hl = document.getElementById(`hl_${id}`).value;
+            if (!storeData[id]) storeData[id] = {};
+            storeData[id].highlight = hl;
+        }
+
+        function updateQualText(id) {
+            const txt = document.getElementById(`txt_${id}`).value;
+            if (!storeData[id]) storeData[id] = {};
+            storeData[id].text = txt;
+        }
+
+        function saveAllData() {
+            localStorage.setItem('FYU_SPROUT_DATA_AA', JSON.stringify(storeData));
+            alert(`【教務處】已成功將 ${currentMonthKey} 月份填報數據暫存於瀏覽器快取！`);
+        }
+
+        function exportCSV() {
+            let csvContent = "\uFEFF指標編號,面向,指標項目,衡量方式,週期類型,當前對齊週期,類型,目標值,當期數據,達成率,質化說明/微亮點\n";
+            const cycle = getCycleInfo(currentMonthKey);
+
+            RAW_INDICATORS.forEach(item => {
+                const saved = storeData[item.id] || {};
+                let cycleName = item.cycle === '學期' ? cycle.sem : (item.cycle === '學年度' ? cycle.acad : cycle.yr);
+
+                let target = saved.target || '';
+                let val = saved.val || '';
+                let rate = (val && target) ? Math.round((parseFloat(val)/parseFloat(target))*100) + '%' : '';
+                let desc = (item.type === '質化') ? (saved.text || saved.highlight || '') : '';
+                desc = `"${desc.replace(/"/g, '""')}"`;
+
+                csvContent += `${item.id},${item.dim},${item.group},"${item.name}",${item.cycle},${cycleName},${item.type},${target},${val},${rate},${desc}\n`;
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `輔英科大高教深耕指標填報_教務處_${currentMonthKey}.csv`;
+            link.click();
+        }
+
+        // 初始化
+        window.onload = function() {
+            const local = localStorage.getItem('FYU_SPROUT_DATA_AA');
+            if (local) {
+                try { storeData = JSON.parse(local); } catch(e){}
+            }
+            onMonthChange();
+        };
+    </script>
+</body>
+</html>

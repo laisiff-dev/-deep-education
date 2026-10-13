@@ -25,3 +25,7 @@ dist/
 # Excel temporary lock files
 ~$*
 
+# Scratch & temporary test scripts
+scratch/
+
+
